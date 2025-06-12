@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Collector - Juego Espacial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            font-family: 'Orbitron', monospace;
+        }
+        
+        body {
+            overflow: hidden;
+            user-select: none;
+            touch-action: none;
+        }
+        
+        .star-field {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #0a0a2e, #16213e, #0f3460);
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .pulse { animation: pulse 2s infinite; }
+        .rotate { animation: rotate 4s linear infinite; }
+        
+        #gameCanvas {
+            border: 2px solid #4c1d95;
+            box-shadow: 0 0 30px rgba(76, 29, 149, 0.5);
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .cosmic-bg {
+            background: radial-gradient(circle at 50% 50%, rgba(76, 29, 149, 0.3), transparent 70%);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white overflow-hidden">
+    <!-- Fondo de estrellas -->
+    <div class="star-field" id="starField"></div>
+    
+    <!-- UI del juego -->
+    <div class="relative z-10 p-4">
+        <!-- Header con stats -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="cosmic-bg p-3 rounded-lg">
+                <div class="text-lg font-bold neon-text text-purple-300">⭐ <span id="score">0</span></div>
+                <div class="text-sm text-gray-300">Puntos</div>
+            </div>
+            <div class="cosmic-bg p-3 rounded-lg">
+                <div class="text-lg font-bold neon-text text-blue-300">💖 <span id="lives">3</span></div>
+                <div class="text-sm text-gray-300">Vidas</div>
+            </div>
+            <div class="cosmic-bg p-3 rounded-lg">
+                <div class="text-lg font-bold neon-text text-green-300">⚡ <span id="energy">100</span></div>
+                <div class="text-sm text-gray-300">Energía</div>
+            </div>
+        </div>
+        
+        <!-- Canvas del juego -->
+        <canvas id="gameCanvas" class="w-full mx-auto block"></canvas>
+        
+        <!-- Controles móviles -->
+        <div class="mt-4 flex justify-center space-x-4">
+            <button id="boostBtn" class="cosmic-bg p-4 rounded-full text-2xl pulse active:scale-95 transition-transform">
+                🚀
+            </button>
+            <button id="shieldBtn" class="cosmic-bg p-4 rounded-full text-2xl pulse active:scale-95 transition-transform">
+                🛡️
+            </button>
+        </div>
+        
+        <!-- Información de objetos -->
+        <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+            <div class="cosmic-bg p-2 rounded">
+                <span class="text-yellow-300">⭐ Estrellas</span> - 10 pts
+            </div>
+            <div class="cosmic-bg p-2 rounded">
+                <span class="text-blue-300">🪐 Planetas</span> - 50 pts
+            </div>
+            <div class="cosmic-bg p-2 rounded">
+                <span class="text-red-300">🕳️ Agujeros</span> - ¡Evita!
+            </div>
+            <div class="cosmic-bg p-2 rounded">
+                <span class="text-green-300">💎 Cristales</span> - 100 pts
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pantalla de Game Over -->
+    <div id="gameOverScreen" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+        <div class="cosmic-bg p-8 rounded-xl text-center max-w-sm mx-4">
+            <h2 class="text-3xl font-bold neon-text text-red-400 mb-4">¡MISIÓN TERMINADA!</h2>
+            <p class="text-xl mb-2">Puntuación Final:</p>
+            <p class="text-4xl font-bold neon-text text-yellow-300 mb-6" id="finalScore">0</p>
+            <button id="restartBtn" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold text-lg transition-colors w-full">
+                🚀 Nueva Misión
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Configuración del juego
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Hacer el canvas responsive
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const maxWidth = Math.min(window.innerWidth - 32, 400);
+            const maxHeight = Math.min(window.innerHeight - 300, 500);
+            
+            canvas.width = maxWidth;
+            canvas.height = maxHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Estado del juego
+        let gameState = {
+            score: 0,
+            lives: 3,
+            energy: 100,
+            isGameOver: false,
+            isPaused: false,
+            shieldActive: false,
+            boostActive: false
+        };
+        
+        // Nave del jugador
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height - 80,
+            width: 30,
+            height: 30,
+            speed: 5,
+            targetX: canvas.width / 2,
+            targetY: canvas.height - 80
+        };
+        
+        // Arrays de objetos del juego
+        let stars = [];
+        let planets = [];
+        let blackHoles = [];
+        let crystals = [];
+        let particles = [];
+        
+        // Crear fondo de estrellas
+        function createStarField() {
+            const starField = document.getElementById('starField');
+            starField.innerHTML = '';
+            
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = Math.random() * 3 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starField.appendChild(star);
+            }
+        }
+        
+        // Detección de modo oscuro
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // Clase para objetos celestes
+        class CelestialObject {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.speed = Math.random() * 2 + 1;
+                this.size = this.getSize();
+                this.angle = 0;
+                this.points = this.getPoints();
+            }
+            
+            getSize() {
+                switch(this.type) {
+                    case 'star': return 15;
+                    case 'planet': return 25;
+                    case 'blackhole': return 35;
+                    case 'crystal': return 20;
+                    default: return 15;
+                }
+            }
+            
+            getPoints() {
+                switch(this.type) {
+                    case 'star': return 10;
+                    case 'planet': return 50;
+                    case 'blackhole': return -1; // Daño
+                    case 'crystal': return 100;
+                    default: return 10;
+                }
+            }
+            
+            update() {
+                this.y += this.speed;
+                this.angle += 0.1;
+                
+                if (this.y > canvas.height + this.size) {
+                    return false; // Marcar para eliminación
+                }
+                return true;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                
+                switch(this.type) {
+                    case 'star':
+                        this.drawStar();
+                        break;
+                    case 'planet':
+                        this.drawPlanet();
+                        break;
+                    case 'blackhole':
+                        this.drawBlackHole();
+                        break;
+                    case 'crystal':
+                        this.drawCrystal();
+                        break;
+                }
+                
+                ctx.restore();
+            }
+            
+            drawStar() {
+                ctx.fillStyle = '#FFD700';
+                ctx.shadowColor = '#FFD700';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * Math.PI * 2) / 5;
+                    const x = Math.cos(angle) * this.size;
+                    const y = Math.sin(angle) * this.size;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                    
+                    const innerAngle = ((i + 0.5) * Math.PI * 2) / 5;
+                    const innerX = Math.cos(innerAngle) * this.size * 0.5;
+                    const innerY = Math.sin(innerAngle) * this.size * 0.5;
+                    ctx.lineTo(innerX, innerY);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            drawPlanet() {
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+                gradient.addColorStop(0, '#4F46E5');
+                gradient.addColorStop(1, '#1E1B4B');
+                
+                ctx.fillStyle = gradient;
+                ctx.shadowColor = '#4F46E5';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Anillos
+                ctx.strokeStyle = '#8B5CF6';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size + 10, this.size / 3, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            drawBlackHole() {
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+                gradient.addColorStop(0, '#000000');
+                gradient.addColorStop(0.7, '#4C1D95');
+                gradient.addColorStop(1, '#EC4899');
+                
+                ctx.fillStyle = gradient;
+                ctx.shadowColor = '#EC4899';
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            drawCrystal() {
+                ctx.fillStyle = '#10B981';
+                ctx.shadowColor = '#10B981';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.moveTo(0, -this.size);
+                ctx.lineTo(this.size * 0.7, -this.size * 0.3);
+                ctx.lineTo(this.size * 0.7, this.size * 0.3);
+                ctx.lineTo(0, this.size);
+                ctx.lineTo(-this.size * 0.7, this.size * 0.3);
+                ctx.lineTo(-this.size * 0.7, -this.size * 0.3);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            checkCollision(playerX, playerY, playerSize) {
+                const dx = this.x - playerX;
+                const dy = this.y - playerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < (this.size + playerSize) / 2;
+            }
+        }
+        
+        // Clase para partículas de efectos
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10;
+                this.color = color;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.02 + 0.01;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+                return this.life > 0;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        
+        // Generar objetos celestes
+        function spawnObjects() {
+            if (Math.random() < 0.3) {
+                const types = ['star', 'planet', 'crystal', 'blackhole'];
+                const weights = [0.5, 0.25, 0.15, 0.1]; // Probabilidades
+                
+                let random = Math.random();
+                let type = 'star';
+                
+                for (let i = 0; i < types.length; i++) {
+                    if (random < weights[i]) {
+                        type = types[i];
+                        break;
+                    }
+                    random -= weights[i];
+                }
+                
+                const obj = new CelestialObject(
+                    Math.random() * (canvas.width - 60) + 30,
+                    -30,
+                    type
+                );
+                
+                switch(type) {
+                    case 'star':
+                        stars.push(obj);
+                        break;
+                    case 'planet':
+                        planets.push(obj);
+                        break;
+                    case 'blackhole':
+                        blackHoles.push(obj);
+                        break;
+                    case 'crystal':
+                        crystals.push(obj);
+                        break;
+                }
+            }
+        }
+        
+        // Dibujar la nave del jugador
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // Escudo si está activo
+            if (gameState.shieldActive) {
+                ctx.strokeStyle = '#06B6D4';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#06B6D4';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(0, 0, player.width + 10, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Nave
+            ctx.fillStyle = gameState.boostActive ? '#F59E0B' : '#EF4444';
+            ctx.shadowColor = gameState.boostActive ? '#F59E0B' : '#EF4444';
+            ctx.shadowBlur = 15;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, -player.height/2);
+            ctx.lineTo(-player.width/2, player.height/2);
+            ctx.lineTo(0, player.height/3);
+            ctx.lineTo(player.width/2, player.height/2);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Propulsores
+            if (gameState.boostActive) {
+                ctx.fillStyle = '#3B82F6';
+                ctx.beginPath();
+                ctx.moveTo(-player.width/4, player.height/2);
+                ctx.lineTo(0, player.height + 10);
+                ctx.lineTo(player.width/4, player.height/2);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+        
+        // Actualizar nave del jugador
+        function updatePlayer() {
+            // Movimiento suave hacia el objetivo
+            const dx = player.targetX - player.x;
+            const dy = player.targetY - player.y;
+            
+            player.x += dx * 0.1;
+            player.y += dy * 0.1;
+            
+            // Límites del canvas
+            player.x = Math.max(player.width/2, Math.min(canvas.width - player.width/2, player.x));
+            player.y = Math.max(player.height/2, Math.min(canvas.height - player.height/2, player.y));
+        }
+        
+        // Comprobar colisiones
+        function checkCollisions() {
+            const allObjects = [...stars, ...planets, ...crystals, ...blackHoles];
+            
+            for (let i = allObjects.length - 1; i >= 0; i--) {
+                const obj = allObjects[i];
+                
+                if (obj.checkCollision(player.x, player.y, player.width)) {
+                    // Crear partículas de explosión
+                    for (let j = 0; j < 10; j++) {
+                        let color = '#FFD700';
+                        if (obj.type === 'planet') color = '#4F46E5';
+                        else if (obj.type === 'crystal') color = '#10B981';
+                        else if (obj.type === 'blackhole') color = '#EF4444';
+                        
+                        particles.push(new Particle(obj.x, obj.y, color));
+                    }
+                    
+                    if (obj.type === 'blackhole') {
+                        if (!gameState.shieldActive) {
+                            gameState.lives--;
+                            gameState.energy = Math.max(0, gameState.energy - 20);
+                            
+                            if (gameState.lives <= 0) {
+                                endGame();
+                                return;
+                            }
+                        }
+                    } else {
+                        gameState.score += obj.points;
+                        gameState.energy = Math.min(100, gameState.energy + 5);
+                    }
+                    
+                    // Remover objeto
+                    if (stars.includes(obj)) stars.splice(stars.indexOf(obj), 1);
+                    else if (planets.includes(obj)) planets.splice(planets.indexOf(obj), 1);
+                    else if (crystals.includes(obj)) crystals.splice(crystals.indexOf(obj), 1);
+                    else if (blackHoles.includes(obj)) blackHoles.splice(blackHoles.indexOf(obj), 1);
+                }
+            }
+        }
+        
+        // Actualizar objetos
+        function updateObjects() {
+            // Actualizar y filtrar objetos
+            stars = stars.filter(obj => obj.update());
+            planets = planets.filter(obj => obj.update());
+            crystals = crystals.filter(obj => obj.update());
+            blackHoles = blackHoles.filter(obj => obj.update());
+            
+            // Actualizar partículas
+            particles = particles.filter(particle => particle.update());
+        }
+        
+        // Dibujar objetos
+        function drawObjects() {
+            [...stars, ...planets, ...crystals, ...blackHoles].forEach(obj => obj.draw());
+            particles.forEach(particle => particle.draw());
+        }
+        
+        // Actualizar UI
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('lives').textContent = gameState.lives;
+            document.getElementById('energy').textContent = Math.floor(gameState.energy);
+        }
+        
+        // Finalizar juego
+        function endGame() {
+            gameState.isGameOver = true;
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+        
+        // Reiniciar juego
+        function restartGame() {
+            gameState = {
+                score: 0,
+                lives: 3,
+                energy: 100,
+                isGameOver: false,
+                isPaused: false,
+                shieldActive: false,
+                boostActive: false
+            };
+            
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 80;
+            player.targetX = canvas.width / 2;
+            player.targetY = canvas.height - 80;
+            
+            stars = [];
+            planets = [];
+            blackHoles = [];
+            crystals = [];
+            particles = [];
+            
+            document.getElementById('gameOverScreen').classList.add('hidden');
+        }
+        
+        // Loop principal del juego
+        function gameLoop() {
+            if (!gameState.isGameOver && !gameState.isPaused) {
+                // Limpiar canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Actualizar
+                updatePlayer();
+                updateObjects();
+                spawnObjects();
+                checkCollisions();
+                
+                // Dibujar
+                drawObjects();
+                drawPlayer();
+                
+                // Actualizar UI
+                updateUI();
+                
+                // Decrementar efectos especiales
+                if (gameState.shieldActive) {
+                    gameState.energy -= 0.5;
+                    if (gameState.energy <= 0) {
+                        gameState.shieldActive = false;
+                    }
+                }
+                
+                if (gameState.boostActive) {
+                    gameState.energy -= 0.3;
+                    if (gameState.energy <= 0) {
+                        gameState.boostActive = false;
+                    }
+                }
+                
+                // Regenerar energía lentamente
+                if (!gameState.shieldActive && !gameState.boostActive) {
+                    gameState.energy = Math.min(100, gameState.energy + 0.1);
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners para controles táctiles
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            player.targetX = touch.clientX - rect.left;
+            player.targetY = touch.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            player.targetX = touch.clientX - rect.left;
+            player.targetY = touch.clientY - rect.top;
+        });
+        
+        // Event listeners para mouse (desktop)
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            player.targetX = e.clientX - rect.left;
+            player.targetY = e.clientY - rect.top;
+        });
+        
+        // Botones de power-ups
+        document.getElementById('boostBtn').addEventListener('click', () => {
+            if (gameState.energy >= 20 && !gameState.boostActive) {
+                gameState.boostActive = true;
+                player.speed = 8;
+            }
+        });
+        
+        document.getElementById('shieldBtn').addEventListener('click', () => {
+            if (gameState.energy >= 30 && !gameState.shieldActive) {
+                gameState.shieldActive = true;
+            }
+        });
+        
+        // Botón de reinicio
+        document.getElementById('restartBtn').addEventListener('click', restartGame);
+        
+        // Inicializar juego
+        createStarField();
+        gameLoop();
+    </script>
+</body>
+</html>

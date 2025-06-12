@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrera de Buses Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Estilos personalizados */
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(to bottom, #0f172a, #1e293b); /* Gradiente oscuro agresivo */
+            color: #e2e8f0; /* Color de texto general */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden; /* Evitar scroll horizontal */
+            padding: 20px;
+            position: relative; /* Para efectos de fondo */
+        }
+
+        /* Efecto de fondo tipo velocidad */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 70%, rgba(0,0,0,1) 100%);
+            z-index: -1; /* Detrás del contenido */
+            animation: pulseBackground 15s infinite ease-in-out; /* Animación sutil */
+        }
+
+        @keyframes pulseBackground {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        h1, p {
+            text-align: center;
+            color: #ffffff; /* Títulos en blanco */
+            text-shadow: 3px 3px #000; /* Sombra más pronunciada */
+        }
+
+        .track-container {
+             position: relative;
+             overflow: hidden;
+             background-color: #1e293b; /* Gris oscuro para la pista */
+             border: 6px solid #475569; /* Borde más pronunciado */
+             border-radius: 12px;
+             padding: 25px; /* Espacio interno */
+             width: 100%;
+             max-width: 1000px; /* Ancho máximo */
+             margin: 20px auto;
+             box-shadow: 0 0 30px rgba(255, 0, 0, 0.6); /* Sombra roja intensa */
+        }
+
+        #track {
+            height: 120px; /* Altura para los dos carriles + espacio para velocímetros */
+            position: relative;
+        }
+
+        /* Líneas de carril punteadas mejoradas */
+        #track::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 6px; /* Línea más gruesa */
+            background: repeating-linear-gradient(to right, #f87171 0, #f87171 15px, transparent 15px, transparent 30px); /* Rojo vibrante */
+            transform: translateY(-50%);
+            z-index: 5;
+        }
+
+        .bus {
+            position: absolute;
+            left: 0;
+            transition: left 0.15s linear; /* Ajustado para la duración de la carrera (15s / 100 pasos) */
+            height: 50px; /* Altura de cada carril incluyendo velocímetro */
+            display: flex;
+            align-items: center;
+            z-index: 15;
+             animation: engineIdle 1s linear infinite; /* Animación de motor al inicio */
+        }
+
+        @keyframes engineIdle {
+             0% { transform: translateX(0); }
+             50% { transform: translateX(-0.5px); }
+             100% { transform: translateX(0); }
+        }
+
+         .bus.racing {
+             animation: vibrate 0.3s linear infinite; /* Vibración más intensa durante la carrera */
+         }
+
+        @keyframes vibrate {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            50% { transform: translateX(0); }
+            75% { transform: translateX(2px); }
+            100% { transform: translateX(0); }
+        }
+
+        #bus-redbull { top: 5px; } /* Ajustar posición para dejar espacio arriba */
+        #bus-monster { top: 65px; } /* Ajustar posición y separación */
+
+        /* Estilo para la línea de meta - Patrón a cuadros */
+        .finish-line {
+             position: absolute;
+             right: 10px;
+             top: 0;
+             bottom: 0;
+             width: 25px; /* Ancho del patrón */
+             background: repeating-conic-gradient(#fcd34d 0% 25%, transparent 0% 50%) 0 / 12.5px 12.5px; /* Amarillo vibrante */
+             background-size: 12.5px 12.5px;
+             z-index: 10;
+             border-left: 3px solid #ef4444; /* Borde rojo a la izquierda del patrón */
+        }
+
+        /* Estilo para representar los buses de forma más detallada */
+         .bus-representation {
+             display: flex;
+             align-items: center;
+             position: relative;
+         }
+
+         .bus-body {
+             width: 70px; /* Ancho del cuerpo del bus */
+             height: 35px; /* Alto del cuerpo del bus */
+             border-radius: 10px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             font-size: 0.8em;
+             color: white;
+             font-weight: bold;
+             padding: 0 10px;
+             box-shadow: 3px 3px 8px rgba(0,0,0,0.6);
+             position: relative;
+             overflow: hidden;
+             border: 2px solid rgba(255,255,255,0.3); /* Borde sutil */
+         }
+
+          /* Pseudo-elemento para simular el techo redondeado */
+         .bus-body::before {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 0;
+             right: 0;
+             height: 12px;
+             background-color: rgba(255,255,255,0.3); /* Color sutil para el brillo del techo */
+             border-top-left-radius: 8px;
+             border-top-right-radius: 8px;
+         }
+
+         .bus-icon {
+             font-size: 1.5em; /* Tamaño del icono */
+             margin-right: 8px;
+             text-shadow: 1px 1px 2px #000;
+         }
+
+         .bus-wheels {
+             display: flex;
+             justify-content: space-between;
+             width: 80px; /* Ancho total de las ruedas */
+             position: absolute;
+             bottom: -12px; /* Debajo del cuerpo */
+             left: -5px;
+             z-index: 20;
+         }
+
+         .wheel {
+             width: 15px;
+             height: 15px;
+             background-color: #1f2937; /* Gris oscuro */
+             border-radius: 50%;
+             border: 3px solid #000;
+             box-shadow: inset 0 0 6px rgba(0,0,0,0.9);
+             animation: rotateWheel 0.5s linear infinite; /* Animación de rotación más rápida */
+         }
+
+         @keyframes rotateWheel {
+             0% { transform: rotate(0deg); }
+             100% { transform: rotate(360deg); }
+         }
+
+         /* Detener animaciones al ganar */
+         .bus.winner {
+             animation: none;
+         }
+         .bus.winner .wheel {
+             animation: none;
+         }
+
+        /* Estilo para el velocímetro */
+        .speedometer {
+            position: absolute;
+            top: -20px; /* Posicionar encima del bus */
+            left: 0;
+            width: 100%; /* Ocupar el ancho del bus */
+            height: 8px;
+            background-color: #4b5563; /* Fondo gris */
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #1f2937;
+        }
+
+        .speed-bar {
+            height: 100%;
+            width: 0%; /* Inicialmente vacío */
+            background-color: #34d399; /* Verde */
+            transition: width 0.1s ease-out; /* Transición suave del ancho */
+        }
+
+        /* Estilo para el mensaje del ganador (tipo modal simple) */
+        .winner-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); /* Fondo más oscuro */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+        }
+
+        .winner-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .winner-content {
+            background: linear-gradient(to bottom right, #475569, #1f2937); /* Gradiente en el modal */
+            color: #ffeb3b; /* Amarillo brillante */
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(255, 235, 59, 0.8); /* Sombra brillante amarilla */
+            font-size: 1.8em;
+            border: 4px solid #ffeb3b;
+            animation: winnerPop 0.6s ease-out; /* Animación de aparición */
+        }
+
+        @keyframes winnerPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        /* Estilo para el botón de inicio y reiniciar */
+        #start-button, #restart-button {
+            background-color: #ef4444; /* Rojo agresivo */
+            color: white;
+            padding: 18px 35px;
+            font-size: 1.3em;
+            font-family: 'Press Start 2P', cursive;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 30px;
+            box-shadow: 0 6px #dc2626; /* Sombra para efecto 3D */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.1s ease;
+            display: inline-block; /* Asegurar que sea un bloque para padding/margin */
+            text-decoration: none; /* Eliminar subrayado si fuera un link */
+        }
+
+        #start-button:hover, #restart-button:hover {
+            background-color: #dc2626; /* Rojo más oscuro al pasar el ratón */
+            box-shadow: 0 4px #b91c1c;
+            transform: translateY(2px); /* Efecto de "presionar" */
+        }
+
+         #start-button:active, #restart-button:active {
+             background-color: #b91c1c;
+             box-shadow: 0 0 #b91c1c;
+             transform: translateY(6px);
+         }
+
+         #start-button:disabled {
+             background-color: #a0aec0;
+             box-shadow: 0 6px #718096;
+             cursor: not-allowed;
+             transform: none;
+         }
+
+         #restart-button {
+             background-color: #3b82f6; /* Azul Tailwind */
+             box-shadow: 0 6px #2563eb; /* Sombra azul */
+         }
+
+         #restart-button:hover {
+             background-color: #2563eb;
+             box-shadow: 0 4px #1d4ed8;
+         }
+          #restart-button:active {
+             background-color: #1d4ed8;
+             box-shadow: 0 0 #1d4ed8;
+         }
+
+
+         /* Mensaje de estado de la carrera (ya no se usa) */
+         #status-message {
+             margin-top: 15px;
+             font-size: 1em;
+             color: #9ca3af; /* Gris */
+             text-align: center;
+             min-height: 1em; /* Asegurar espacio incluso si está vacío */
+         }
+
+         /* Efectos visuales (chispas eliminadas ya que no hay choques) */
+         .effect-overlay {
+             position: absolute;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             pointer-events: none; /* No bloquear clics */
+             z-index: 50; /* Por encima de los buses pero debajo del modal */
+             /* display: none; /* Ocultar si no se planean usar efectos */
+         }
+         /* .spark, @keyframes sparkFadeOut ya no se usan */
+
+    </style>
+</head>
+<body>
+
+    <h1 class="text-4xl md:text-6xl font-bold mb-2">CARRERA PROFESIONAL</h1>
+    <p class="text-xl md:text-2xl mb-8 text-gray-400">RED BULL VS MONSTER</p>
+
+    <div class="track-container">
+        <div id="track">
+            <div id="bus-redbull" class="bus" data-team="RED BULL">
+                 <div class="speedometer"><div class="speed-bar"></div></div>
+                 <div class="bus-representation">
+                      <i class="fas fa-truck-monster bus-icon text-red-500"></i> <div class="bus-body bg-red-700">RB</div>
+                     <div class="bus-wheels">
+                         <div class="wheel"></div>
+                         <div class="wheel"></div>
+                     </div>
+                 </div>
+            </div>
+
+            <div id="bus-monster" class="bus" data-team="MONSTER">
+                 <div class="speedometer"><div class="speed-bar"></div></div>
+                 <div class="bus-representation">
+                      <i class="fas fa-bus-alt bus-icon text-blue-500"></i> <div class="bus-body bg-blue-700">MT</div>
+                      <div class="bus-wheels">
+                         <div class="wheel"></div>
+                         <div class="wheel"></div>
+                     </div>
+                 </div>
+            </div>
+
+            <div class="finish-line"></div>
+        </div>
+         <div id="effects-overlay" class="effect-overlay"></div>
+    </div>
+
+    <button id="start-button">INICIAR CARRERA</button>
+
+    <div id="status-message"></div>
+
+    <div id="winner-modal" class="winner-modal">
+        <div class="winner-content">
+            <div id="winner-message" class="mb-8"></div> <button id="restart-button">Reiniciar Carrera</button> </div>
+    </div>
+
+    <audio id="background-music" loop>
+        <source src="" type="audio/mpeg"> Tu navegador no soporta el elemento de audio.
+    </audio>
+
+    <script>
+        // Lógica de la carrera con JavaScript
+
+        const busRedbull = document.getElementById('bus-redbull');
+        const busMonster = document.getElementById('bus-monster');
+        const winnerModal = document.getElementById('winner-modal');
+        const winnerMessage = document.getElementById('winner-message');
+        const trackContainer = document.querySelector('.track-container');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button'); // Referencia al nuevo botón
+        const backgroundMusic = document.getElementById('background-music');
+        const statusMessage = document.getElementById('status-message'); // Se mantiene pero no se usa activamente
+        const effectsOverlay = document.getElementById('effects-overlay'); // Se mantiene pero no se usa activamente
+
+
+        let posRedbull = 0; // Posición en "pasos" lógicos
+        let posMonster = 0;
+        let raceInProgress = false; // Bandera para controlar si la carrera está activa
+        let raceLoopTimeout; // Para almacenar el ID del timeout del bucle de carrera
+
+        // Definir la longitud de la carrera en pasos lógicos
+        const raceLength = 100; // El bus necesita dar 100 pasos para "ganar"
+
+        // Calcular el retraso por paso para que la carrera dure exactamente 15 segundos
+        const desiredRaceDurationMs = 15000; // 15 segundos
+        const stepIntervalMs = desiredRaceDurationMs / raceLength; // 15000 / 100 = 150 ms por paso lógico
+
+        // Variables para almacenar el ancho del track y del bus
+        let trackWidthPx;
+        let busWidthPx;
+
+        // Función para obtener las dimensiones necesarias (se llama al inicio y al redimensionar)
+        function getTrackDimensions() {
+             const containerPaddingLeft = parseFloat(getComputedStyle(trackContainer).paddingLeft);
+             const containerPaddingRight = parseFloat(getComputedStyle(trackContainer).paddingRight);
+             trackWidthPx = trackContainer.clientWidth - containerPaddingLeft - containerPaddingRight;
+             const busRep = busRedbull.querySelector('.bus-representation');
+              if (busRep) {
+                 busWidthPx = busRep.offsetWidth;
+             } else {
+                 busWidthPx = 80; // Valor por defecto estimado
+                 console.error("Elemento .bus-representation no encontrado. Usando ancho por defecto.");
+             }
+        }
+
+        // Función para actualizar la posición visual de los buses en la pantalla
+        function updateBusPosition() {
+            getTrackDimensions(); // Recalcular dimensiones
+
+            const finishLineRightOffset = 10; // Coincide con el CSS 'right: 10px' de .finish-line
+             // Asegurarse de que la distancia total de movimiento sea al menos 0
+            const totalMovementDistance = trackWidthPx - finishLineRightOffset - busWidthPx;
+            const safeTotalMovementDistance = Math.max(0, totalMovementDistance); // No permitir distancias negativas
+
+            const pixelPerStep = raceLength > 0 ? safeTotalMovementDistance / raceLength : 0;
+
+            const redbullPixelPos = posRedbull * pixelPerStep;
+            const monsterPixelPos = posMonster * pixelPerStep;
+
+            busRedbull.style.left = `${redbullPixelPos}px`;
+            busMonster.style.left = `${monsterPixelPos}px`;
+
+            // Actualizar velocímetros (basado en si se movió en este paso)
+            // En una carrera directa, siempre se moverán si es su turno, así que el velocímetro subirá constantemente
+            updateSpeedometer(busRedbull, posRedbull > (busRedbull._lastPos || 0));
+            updateSpeedometer(busMonster, posMonster > (busMonster._lastPos || 0));
+
+            busRedbull._lastPos = posRedbull; // Guardar última posición para el velocímetro
+            busMonster._lastPos = posMonster;
+        }
+
+        // Función para actualizar la barra del velocímetro
+        function updateSpeedometer(busElement, movedThisStep) {
+            const speedBar = busElement.querySelector('.speed-bar');
+            let currentWidth = parseFloat(speedBar.style.width) || 0;
+
+            // Aumentar si se movió, disminuir gradualmente si no
+            // En esta versión, siempre se mueven si es su turno, así que subirá constantemente
+            if (movedThisStep) {
+                currentWidth = Math.min(100, currentWidth + 10); // Aumentar un poco por movimiento
+            } else {
+                currentWidth = Math.max(0, currentWidth - 2); // Disminuir gradualmente (más lento que antes)
+            }
+
+            speedBar.style.width = `${currentWidth}%`;
+        }
+
+        // Función principal para un paso de la carrera
+        function raceStep() {
+            // Verificar si la carrera está en progreso
+            if (!raceInProgress) {
+                return;
+            }
+
+            // Decidir qué bus se mueve (aleatorio, sin lógica de colisión ni trampas)
+            const mover = Math.random() < 0.5 ? "RED BULL" : "MONSTER";
+
+            // Aplicar movimiento lógico (siempre 1 paso)
+            if (mover === "RED BULL") {
+                 posRedbull += 1;
+            } else { // mover === "MONSTER"
+                 posMonster += 1;
+            }
+
+            // Actualizar la posición visual en la pantalla
+            updateBusPosition();
+
+            // Verificar si ya hay un ganador
+            if (posRedbull >= raceLength || posMonster >= raceLength) {
+                raceInProgress = false; // Marcar la carrera como terminada
+                clearTimeout(raceLoopTimeout); // Detener el bucle de carrera
+
+                let winner = posRedbull >= raceLength ? "RED BULL" : "MONSTER";
+                winnerMessage.textContent = `¡${winner} GANÓ LA CARRERA!`; // Mostrar mensaje ganador
+                winnerModal.classList.add('show'); // Mostrar modal del ganador
+                restartButton.style.display = 'inline-block'; // Mostrar botón de reiniciar
+
+                // Detener animación de vibración para el ganador y perdedor
+                busRedbull.classList.remove('racing');
+                busMonster.classList.remove('racing');
+                 if (posRedbull >= raceLength) {
+                    busRedbull.classList.add('winner');
+                } else {
+                    busMonster.classList.add('winner');
+                }
+
+                 // Opcional: Pausar la música al terminar la carrera
+                 // backgroundMusic.pause();
+
+                return; // Detener el bucle de la carrera
+            }
+
+            // Programar el siguiente paso de la carrera después del retraso calculado
+            raceLoopTimeout = setTimeout(raceStep, stepIntervalMs);
+        }
+
+        // Función para reiniciar la carrera
+        function resetRace() {
+            posRedbull = 0;
+            posMonster = 0;
+            raceInProgress = false;
+            clearTimeout(raceLoopTimeout); // Asegurarse de que no hay un timeout activo
+            updateBusPosition(); // Mover buses de vuelta al inicio
+            winnerModal.classList.remove('show'); // Ocultar modal
+            restartButton.style.display = 'none'; // Ocultar botón de reiniciar
+            startButton.disabled = false; // Habilitar botón de inicio
+            startButton.textContent = 'INICIAR CARRERA'; // Restaurar texto del botón
+            statusMessage.textContent = ''; // Limpiar mensaje de estado (aunque ya no se usa activamente)
+
+            // Remover clases de efectos y ganador
+            busRedbull.classList.remove('winner', 'racing');
+            busMonster.classList.remove('winner', 'racing');
+
+             // Reiniciar velocímetros
+             busRedbull.querySelector('.speed-bar').style.width = '0%';
+             busMonster.querySelector('.speed-bar').style.width = '0%';
+
+             // Opcional: Reiniciar la música o ponerla en pausa
+             // backgroundMusic.currentTime = 0; // Reiniciar la música
+             // backgroundMusic.pause(); // Pausar la música
+        }
+
+        // Event listener para el botón de inicio
+        startButton.addEventListener('click', () => {
+            if (!raceInProgress) {
+                resetRace(); // Asegurarse de que esté reiniciada antes de empezar
+                raceInProgress = true;
+                startButton.disabled = true; // Deshabilitar botón durante la carrera
+                startButton.textContent = '¡EN SUS MARCAS!'; // Texto inicial
+                 busRedbull.classList.add('racing'); // Iniciar animación de vibración
+                 busMonster.classList.add('racing');
+
+                 // Pequeña pausa antes de empezar la carrera real
+                 setTimeout(() => {
+                     startButton.textContent = '¡FUERA!';
+                      // Intentar reproducir la música al iniciar la carrera
+                      backgroundMusic.play().catch(error => {
+                          console.log("Error al intentar reproducir la música:", error);
+                          // Puedes mostrar un mensaje al usuario aquí si la reproducción falla
+                      });
+                     raceStep(); // Iniciar el bucle de la carrera
+                 }, 1500); // 1.5 segundos de pausa
+            }
+        });
+
+        // Event listener para el botón de reiniciar
+        restartButton.addEventListener('click', () => {
+             resetRace(); // Llamar a resetRace cuando se haga clic en reiniciar
+             // No iniciamos la carrera automáticamente aquí, el usuario debe hacer clic en el botón principal
+        });
+
+
+        // Esperar a que el DOM esté completamente cargado antes de configurar
+        window.onload = () => {
+             getTrackDimensions(); // Obtener las dimensiones iniciales
+             updateBusPosition(); // Posicionar los buses en el inicio (paso 0)
+             restartButton.style.display = 'none'; // Ocultar botón de reiniciar al cargar
+             // La carrera no inicia automáticamente, espera el clic del botón
+        };
+
+        // Ajustar las posiciones de los buses si la ventana se redimensiona
+         window.onresize = () => {
+             updateBusPosition(); // Recalcular y aplicar nuevas posiciones
+         };
+
+         // Opcional: Cerrar el modal del ganador haciendo clic fuera de él
+         winnerModal.addEventListener('click', (event) => {
+             // Si el clic no fue dentro del contenido del modal ni en el botón de reiniciar
+             if (event.target === winnerModal) {
+                 winnerModal.classList.remove('show');
+                 // Puedes decidir si resetear la carrera automáticamente aquí o esperar al botón
+                 // resetRace(); // Si descomentas esto, clic fuera resetea
+             }
+         });
+
+    </script>
+</body>
+</html>

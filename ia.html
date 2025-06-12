@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Neural Network Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ai-primary': '#5D5CDE',
+                        'ai-secondary': '#00FF88',
+                        'ai-accent': '#FF6B6B',
+                        'neural': '#4ECDC4'
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'neural-flow': 'neuralFlow 2s ease-in-out infinite',
+                        'data-stream': 'dataStream 1.5s linear infinite'
+                    },
+                    keyframes: {
+                        neuralFlow: {
+                            '0%, 100%': { opacity: '0.3', transform: 'scale(1)' },
+                            '50%': { opacity: '1', transform: 'scale(1.1)' }
+                        },
+                        dataStream: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        .font-ai {
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .neural-bg {
+            background: radial-gradient(circle at 50% 50%, rgba(93, 92, 222, 0.1) 0%, transparent 50%);
+        }
+        
+        .glitch-text {
+            position: relative;
+            color: #5D5CDE;
+            font-weight: bold;
+        }
+        
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .glitch-text::before {
+            animation: glitch-anim 0.3s infinite;
+            color: #00FF88;
+            z-index: -1;
+        }
+        
+        .glitch-text::after {
+            animation: glitch-anim2 0.3s infinite;
+            color: #FF6B6B;
+            z-index: -2;
+        }
+        
+        @keyframes glitch-anim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        @keyframes glitch-anim2 {
+            0% { transform: translate(0); }
+            20% { transform: translate(2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(-2px, 2px); }
+            80% { transform: translate(-2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        .matrix-bg {
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 255, 136, 0.1) 50%, transparent 100%);
+            animation: dataStream 3s linear infinite;
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-900 text-white font-ai overflow-x-hidden">
+    <!-- Dark mode detection -->
+    <script>
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+
+    <!-- Neural Network Background -->
+    <div class="fixed inset-0 neural-bg"></div>
+    <div class="fixed inset-0 opacity-20">
+        <div class="matrix-bg h-full"></div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div class="relative z-10 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-black/80 backdrop-blur-sm border-b border-ai-primary/30 p-4">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <h1 class="text-2xl md:text-3xl font-bold glitch-text" data-text="AI NEURAL TRAINER">
+                    AI NEURAL TRAINER
+                </h1>
+                <div class="flex gap-4 text-sm md:text-base">
+                    <div class="bg-ai-primary/20 px-3 py-1 rounded border border-ai-primary">
+                        Nivel: <span id="level">1</span>
+                    </div>
+                    <div class="bg-ai-secondary/20 px-3 py-1 rounded border border-ai-secondary">
+                        IQ: <span id="iq">100</span>
+                    </div>
+                    <div class="bg-ai-accent/20 px-3 py-1 rounded border border-ai-accent">
+                        Precisión: <span id="accuracy">0%</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <main class="flex-1 p-4">
+            <div class="max-w-6xl mx-auto">
+                <!-- Game Intro Screen -->
+                <div id="intro-screen" class="text-center py-12">
+                    <div class="animate-pulse-slow mb-8">
+                        <div class="w-32 h-32 mx-auto bg-gradient-to-r from-ai-primary to-ai-secondary rounded-full flex items-center justify-center text-6xl">
+                            🧠
+                        </div>
+                    </div>
+                    <h2 class="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-ai-primary to-ai-secondary bg-clip-text text-transparent">
+                        ENTRENAMIENTO NEURAL
+                    </h2>
+                    <p class="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-80">
+                        Eres una IA en desarrollo. Completa desafíos para evolucionar tu inteligencia artificial.
+                        Cada decisión correcta fortalece tus conexiones neuronales.
+                    </p>
+                    <button id="start-btn" class="bg-gradient-to-r from-ai-primary to-ai-secondary hover:from-ai-secondary hover:to-ai-primary px-8 py-4 rounded-lg text-xl font-bold transform hover:scale-105 transition-all duration-300 shadow-lg shadow-ai-primary/50">
+                        INICIAR ENTRENAMIENTO
+                    </button>
+                </div>
+
+                <!-- Game Screen -->
+                <div id="game-screen" class="hidden">
+                    <!-- Challenge Area -->
+                    <div class="bg-black/60 backdrop-blur-sm rounded-xl border border-ai-primary/30 p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="challenge-title" class="text-2xl font-bold">Desafío Neural</h3>
+                            <div id="timer" class="text-xl font-mono bg-ai-accent/20 px-4 py-2 rounded border border-ai-accent">
+                                30s
+                            </div>
+                        </div>
+                        
+                        <div id="challenge-description" class="text-lg mb-6 opacity-80">
+                            Preparando desafío...
+                        </div>
+
+                        <!-- Pattern Recognition Challenge -->
+                        <div id="pattern-challenge" class="challenge hidden">
+                            <div class="grid grid-cols-3 gap-4 mb-6">
+                                <div class="pattern-sequence bg-gray-800/50 p-4 rounded-lg border border-neural/30 min-h-24 flex items-center justify-center text-6xl"></div>
+                                <div class="pattern-sequence bg-gray-800/50 p-4 rounded-lg border border-neural/30 min-h-24 flex items-center justify-center text-6xl"></div>
+                                <div class="pattern-sequence bg-gray-800/50 p-4 rounded-lg border border-neural/30 min-h-24 flex items-center justify-center text-6xl relative">
+                                    <span class="text-4xl text-ai-primary">?</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-4 gap-3">
+                                <button class="pattern-option bg-gray-800/50 hover:bg-ai-primary/20 p-4 rounded-lg border border-gray-600 hover:border-ai-primary text-4xl min-h-16 transition-all duration-300"></button>
+                                <button class="pattern-option bg-gray-800/50 hover:bg-ai-primary/20 p-4 rounded-lg border border-gray-600 hover:border-ai-primary text-4xl min-h-16 transition-all duration-300"></button>
+                                <button class="pattern-option bg-gray-800/50 hover:bg-ai-primary/20 p-4 rounded-lg border border-gray-600 hover:border-ai-primary text-4xl min-h-16 transition-all duration-300"></button>
+                                <button class="pattern-option bg-gray-800/50 hover:bg-ai-primary/20 p-4 rounded-lg border border-gray-600 hover:border-ai-primary text-4xl min-h-16 transition-all duration-300"></button>
+                            </div>
+                        </div>
+
+                        <!-- Data Classification Challenge -->
+                        <div id="classification-challenge" class="challenge hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-gray-800/50 p-4 rounded-lg border border-neural/30">
+                                    <h4 class="text-lg font-bold mb-3 text-neural">Datos de Entrada</h4>
+                                    <div id="data-points" class="space-y-2"></div>
+                                </div>
+                                <div class="bg-gray-800/50 p-4 rounded-lg border border-neural/30">
+                                    <h4 class="text-lg font-bold mb-3 text-ai-secondary">Clasificación</h4>
+                                    <div class="space-y-2">
+                                        <button class="classify-btn w-full p-3 bg-gray-700/50 hover:bg-ai-primary/20 rounded border border-gray-600 hover:border-ai-primary transition-all duration-300 text-left">
+                                            🔴 Amenaza de Seguridad
+                                        </button>
+                                        <button class="classify-btn w-full p-3 bg-gray-700/50 hover:bg-ai-primary/20 rounded border border-gray-600 hover:border-ai-primary transition-all duration-300 text-left">
+                                            🟢 Tráfico Normal
+                                        </button>
+                                        <button class="classify-btn w-full p-3 bg-gray-700/50 hover:bg-ai-primary/20 rounded border border-gray-600 hover:border-ai-primary transition-all duration-300 text-left">
+                                            🟡 Sospechoso
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Memory Challenge -->
+                        <div id="memory-challenge" class="challenge hidden">
+                            <div class="grid grid-cols-4 md:grid-cols-6 gap-3">
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                                <div class="memory-card bg-gray-800/50 border border-neural/30 rounded-lg aspect-square flex items-center justify-center text-3xl cursor-pointer hover:bg-ai-primary/20 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Neural Network Visualization -->
+                    <div class="bg-black/60 backdrop-blur-sm rounded-xl border border-ai-primary/30 p-6">
+                        <h3 class="text-xl font-bold mb-4">Red Neural - Estado Actual</h3>
+                        <div class="grid grid-cols-3 gap-8">
+                            <!-- Input Layer -->
+                            <div class="text-center">
+                                <h4 class="text-sm font-semibold mb-3 text-neural">Entrada</h4>
+                                <div class="space-y-2">
+                                    <div class="neural-node w-8 h-8 bg-neural/30 rounded-full mx-auto animate-neural-flow"></div>
+                                    <div class="neural-node w-8 h-8 bg-neural/30 rounded-full mx-auto animate-neural-flow" style="animation-delay: 0.2s;"></div>
+                                    <div class="neural-node w-8 h-8 bg-neural/30 rounded-full mx-auto animate-neural-flow" style="animation-delay: 0.4s;"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden Layer -->
+                            <div class="text-center">
+                                <h4 class="text-sm font-semibold mb-3 text-ai-primary">Procesamiento</h4>
+                                <div class="space-y-2">
+                                    <div class="neural-node w-8 h-8 bg-ai-primary/30 rounded-full mx-auto animate-neural-flow" style="animation-delay: 0.6s;"></div>
+                                    <div class="neural-node w-8 h-8 bg-ai-primary/30 rounded-full mx-auto animate-neural-flow" style="animation-delay: 0.8s;"></div>
+                                    <div class="neural-node w-8 h-8 bg-ai-primary/30 rounded-full mx-auto animate-neural-flow" style="animation-delay: 1s;"></div>
+                                    <div class="neural-node w-8 h-8 bg-ai-primary/30 rounded-full mx-auto animate-neural-flow" style="animation-delay: 1.2s;"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Output Layer -->
+                            <div class="text-center">
+                                <h4 class="text-sm font-semibold mb-3 text-ai-secondary">Salida</h4>
+                                <div class="space-y-2">
+                                    <div class="neural-node w-8 h-8 bg-ai-secondary/30 rounded-full mx-auto animate-neural-flow" style="animation-delay: 1.4s;"></div>
+                                    <div class="neural-node w-8 h-8 bg-ai-secondary/30 rounded-full mx-auto animate-neural-flow" style="animation-delay: 1.6s;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Screen -->
+                <div id="result-screen" class="hidden text-center py-12">
+                    <div id="result-icon" class="text-8xl mb-6">🎯</div>
+                    <h2 id="result-title" class="text-4xl font-bold mb-4">¡Excelente!</h2>
+                    <p id="result-message" class="text-xl mb-8 opacity-80">Tu red neural se está fortaleciendo</p>
+                    <div class="flex justify-center gap-4">
+                        <button id="next-challenge-btn" class="bg-gradient-to-r from-ai-primary to-ai-secondary hover:from-ai-secondary hover:to-ai-primary px-6 py-3 rounded-lg font-bold transform hover:scale-105 transition-all duration-300">
+                            Siguiente Desafío
+                        </button>
+                        <button id="restart-btn" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg font-bold transform hover:scale-105 transition-all duration-300">
+                            Reiniciar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-black/80 backdrop-blur-sm border-t border-ai-primary/30 p-4 text-center">
+            <p class="text-sm opacity-60">AI Neural Network Trainer v2.0 | Desarrollando Inteligencia Artificial</p>
+        </footer>
+    </div>
+
+    <!-- Game Logic -->
+    <script>
+        class AITrainerGame {
+            constructor() {
+                this.level = 1;
+                this.iq = 100;
+                this.accuracy = 0;
+                this.totalChallenges = 0;
+                this.correctAnswers = 0;
+                this.currentChallenge = null;
+                this.timer = null;
+                this.timeLeft = 30;
+                
+                this.challenges = ['pattern', 'classification', 'memory'];
+                this.patterns = ['🔴', '🟢', '🔵', '🟡', '🟣', '🟠', '⚫', '⚪'];
+                this.memoryCards = ['🚀', '💻', '🤖', '⚡', '🔬', '🧬'];
+                
+                this.init();
+            }
+            
+            init() {
+                this.bindEvents();
+                this.updateDisplay();
+            }
+            
+            bindEvents() {
+                document.getElementById('start-btn').addEventListener('click', () => this.startGame());
+                document.getElementById('next-challenge-btn').addEventListener('click', () => this.nextChallenge());
+                document.getElementById('restart-btn').addEventListener('click', () => this.restart());
+            }
+            
+            startGame() {
+                document.getElementById('intro-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+                this.nextChallenge();
+            }
+            
+            nextChallenge() {
+                document.getElementById('result-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+                
+                this.totalChallenges++;
+                this.timeLeft = 30;
+                this.startTimer();
+                
+                // Select random challenge type
+                const challengeType = this.challenges[Math.floor(Math.random() * this.challenges.length)];
+                this.currentChallenge = challengeType;
+                
+                // Hide all challenges
+                document.querySelectorAll('.challenge').forEach(c => c.classList.add('hidden'));
+                
+                switch(challengeType) {
+                    case 'pattern':
+                        this.setupPatternChallenge();
+                        break;
+                    case 'classification':
+                        this.setupClassificationChallenge();
+                        break;
+                    case 'memory':
+                        this.setupMemoryChallenge();
+                        break;
+                }
+            }
+            
+            setupPatternChallenge() {
+                document.getElementById('challenge-title').textContent = 'Reconocimiento de Patrones';
+                document.getElementById('challenge-description').textContent = 'Analiza la secuencia y selecciona el elemento que continúa el patrón.';
+                document.getElementById('pattern-challenge').classList.remove('hidden');
+                
+                // Generate pattern
+                const pattern = this.generatePattern();
+                const sequences = document.querySelectorAll('.pattern-sequence');
+                sequences[0].textContent = pattern[0];
+                sequences[1].textContent = pattern[1];
+                
+                // Generate options
+                const options = document.querySelectorAll('.pattern-option');
+                const correctAnswer = pattern[2];
+                const wrongAnswers = this.patterns.filter(p => p !== correctAnswer).slice(0, 3);
+                const allAnswers = [correctAnswer, ...wrongAnswers].sort(() => Math.random() - 0.5);
+                
+                options.forEach((option, index) => {
+                    option.textContent = allAnswers[index];
+                    option.onclick = () => this.checkPatternAnswer(allAnswers[index], correctAnswer);
+                });
+            }
+            
+            generatePattern() {
+                const patterns = [
+                    ['🔴', '🟢', '🔵'],
+                    ['🟡', '🟡', '🟡'],
+                    ['🔴', '🔵', '🔴'],
+                    ['⚫', '⚪', '⚫'],
+                    ['🟣', '🟠', '🟣']
+                ];
+                return patterns[Math.floor(Math.random() * patterns.length)];
+            }
+            
+            setupClassificationChallenge() {
+                document.getElementById('challenge-title').textContent = 'Clasificación de Datos';
+                document.getElementById('challenge-description').textContent = 'Analiza los datos de red y clasifica el tipo de tráfico.';
+                document.getElementById('classification-challenge').classList.remove('hidden');
+                
+                const scenarios = [
+                    {
+                        data: ['IP: 192.168.1.100', 'Puerto: 443', 'Protocolo: HTTPS', 'Frecuencia: Normal'],
+                        correct: '🟢 Tráfico Normal'
+                    },
+                    {
+                        data: ['IP: 10.0.0.1', 'Puerto: 22', 'Intentos: 500/min', 'Origen: Desconocido'],
+                        correct: '🔴 Amenaza de Seguridad'
+                    },
+                    {
+                        data: ['IP: 172.16.0.50', 'Puerto: 8080', 'Protocolo: HTTP', 'Horario: 3:00 AM'],
+                        correct: '🟡 Sospechoso'
+                    }
+                ];
+                
+                const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+                this.correctClassification = scenario.correct;
+                
+                const dataPoints = document.getElementById('data-points');
+                dataPoints.innerHTML = scenario.data.map(data => 
+                    `<div class="bg-gray-700/50 p-2 rounded border border-gray-600 font-mono text-sm">${data}</div>`
+                ).join('');
+                
+                document.querySelectorAll('.classify-btn').forEach(btn => {
+                    btn.onclick = () => this.checkClassification(btn.textContent.trim());
+                });
+            }
+            
+            setupMemoryChallenge() {
+                document.getElementById('challenge-title').textContent = 'Memoria Neural';
+                document.getElementById('challenge-description').textContent = 'Memoriza la secuencia y repítela en el mismo orden.';
+                document.getElementById('memory-challenge').classList.remove('hidden');
+                
+                this.memorySequence = [];
+                this.playerSequence = [];
+                this.memoryStep = 0;
+                
+                // Generate sequence
+                const sequenceLength = Math.min(3 + this.level, 8);
+                for(let i = 0; i < sequenceLength; i++) {
+                    this.memorySequence.push(Math.floor(Math.random() * 12));
+                }
+                
+                const cards = document.querySelectorAll('.memory-card');
+                cards.forEach((card, index) => {
+                    card.textContent = '';
+                    card.classList.remove('bg-ai-primary/50', 'border-ai-primary');
+                    card.onclick = () => this.memoryCardClick(index);
+                });
+                
+                // Show sequence
+                this.showMemorySequence();
+            }
+            
+            showMemorySequence() {
+                const cards = document.querySelectorAll('.memory-card');
+                let step = 0;
+                
+                const showNext = () => {
+                    if(step < this.memorySequence.length) {
+                        const cardIndex = this.memorySequence[step];
+                        const card = cards[cardIndex];
+                        
+                        card.classList.add('bg-ai-primary/50', 'border-ai-primary');
+                        card.textContent = '⚡';
+                        
+                        setTimeout(() => {
+                            card.classList.remove('bg-ai-primary/50', 'border-ai-primary');
+                            card.textContent = '';
+                            step++;
+                            setTimeout(showNext, 300);
+                        }, 600);
+                    } else {
+                        // Sequence shown, now player can input
+                        this.memoryInputPhase = true;
+                    }
+                };
+                
+                setTimeout(showNext, 1000);
+            }
+            
+            memoryCardClick(index) {
+                if(!this.memoryInputPhase) return;
+                
+                const card = document.querySelectorAll('.memory-card')[index];
+                card.classList.add('bg-ai-secondary/50', 'border-ai-secondary');
+                card.textContent = '✓';
+                
+                this.playerSequence.push(index);
+                
+                // Check if correct so far
+                if(this.playerSequence[this.playerSequence.length - 1] !== this.memorySequence[this.playerSequence.length - 1]) {
+                    this.showResult(false, 'Secuencia incorrecta. ¡Entrena tu memoria neural!');
+                    return;
+                }
+                
+                // Check if complete
+                if(this.playerSequence.length === this.memorySequence.length) {
+                    this.showResult(true, '¡Perfecto! Tu memoria neural se está fortaleciendo.');
+                }
+            }
+            
+            checkPatternAnswer(selected, correct) {
+                this.stopTimer();
+                this.showResult(selected === correct, 
+                    selected === correct ? 
+                    '¡Patrón reconocido! Conexiones neuronales fortalecidas.' : 
+                    'Patrón incorrecto. Analizando errores para mejorar...'
+                );
+            }
+            
+            checkClassification(selected) {
+                this.stopTimer();
+                this.showResult(selected === this.correctClassification,
+                    selected === this.correctClassification ?
+                    '¡Clasificación correcta! Sistema de análisis mejorado.' :
+                    'Clasificación incorrecta. Reentrenando modelo...'
+                );
+            }
+            
+            showResult(isCorrect, message) {
+                if(isCorrect) {
+                    this.correctAnswers++;
+                    this.iq += 5 + this.level;
+                    
+                    if(this.correctAnswers % 3 === 0) {
+                        this.level++;
+                    }
+                }
+                
+                this.accuracy = Math.round((this.correctAnswers / this.totalChallenges) * 100);
+                this.updateDisplay();
+                
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                
+                document.getElementById('result-icon').textContent = isCorrect ? '🎯' : '❌';
+                document.getElementById('result-title').textContent = isCorrect ? '¡Excelente!' : 'Procesando Error';
+                document.getElementById('result-message').textContent = message;
+                
+                // Neural network animation
+                this.animateNeuralNetwork(isCorrect);
+            }
+            
+            animateNeuralNetwork(success) {
+                const nodes = document.querySelectorAll('.neural-node');
+                nodes.forEach((node, index) => {
+                    setTimeout(() => {
+                        if(success) {
+                            node.classList.add('bg-ai-secondary');
+                            node.style.boxShadow = '0 0 20px rgba(0, 255, 136, 0.6)';
+                        } else {
+                            node.classList.add('bg-ai-accent');
+                            node.style.boxShadow = '0 0 20px rgba(255, 107, 107, 0.6)';
+                        }
+                        
+                        setTimeout(() => {
+                            node.classList.remove('bg-ai-secondary', 'bg-ai-accent');
+                            node.style.boxShadow = '';
+                        }, 1000);
+                    }, index * 100);
+                });
+            }
+            
+            startTimer() {
+                this.timer = setInterval(() => {
+                    this.timeLeft--;
+                    document.getElementById('timer').textContent = `${this.timeLeft}s`;
+                    
+                    if(this.timeLeft <= 0) {
+                        this.stopTimer();
+                        this.showResult(false, 'Tiempo agotado. Optimizando velocidad de procesamiento...');
+                    }
+                }, 1000);
+            }
+            
+            stopTimer() {
+                if(this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+            }
+            
+            updateDisplay() {
+                document.getElementById('level').textContent = this.level;
+                document.getElementById('iq').textContent = this.iq;
+                document.getElementById('accuracy').textContent = this.accuracy + '%';
+            }
+            
+            restart() {
+                this.level = 1;
+                this.iq = 100;
+                this.accuracy = 0;
+                this.totalChallenges = 0;
+                this.correctAnswers = 0;
+                this.stopTimer();
+                this.updateDisplay();
+                
+                document.getElementById('result-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('intro-screen').classList.remove('hidden');
+            }
+        }
+        
+        // Initialize game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AITrainerGame();
+        });
+    </script>
+</body>
+</html>

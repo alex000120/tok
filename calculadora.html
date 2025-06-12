@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.5.0/lib/browser/math.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #5D5CDE;
+            --primary-dark: #4a49b1;
+            --secondary: #9f9efa;
+            --accent: #ff7e67;
+            --dark-bg: #181818;
+            --dark-surface: #262626;
+            --light-bg: #ffffff;
+            --light-surface: #f5f5f7;
+            --text-dark: #333333;
+            --text-light: #f8f8f8;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .dark {
+            color-scheme: dark;
+        }
+        
+        /* Calculadora */
+        .calculator-body {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        .dark .calculator-body {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Botones */
+        .calculator-key {
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+        }
+        
+        .calculator-key:active {
+            transform: scale(0.95);
+        }
+        
+        .calculator-key.operator {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+        
+        .calculator-key.equals {
+            background: linear-gradient(135deg, var(--accent), #ff5a5f);
+        }
+        
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes highlight {
+            0% { background-color: rgba(93, 92, 222, 0.2); }
+            100% { background-color: transparent; }
+        }
+        
+        .step-animation {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        
+        .result-animation {
+            animation: pulse 0.5s ease-out;
+        }
+        
+        .display-fade {
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        .highlight-step {
+            animation: highlight 1s ease-out;
+        }
+        
+        /* Particulas */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+        
+        /* Modo oscuro/claro */
+        .theme-toggle {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            transform: rotate(15deg);
+        }
+
+        /* Historial scroll */
+        .history-container {
+            scrollbar-width: thin;
+            scrollbar-color: var(--secondary) transparent;
+        }
+        
+        .history-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .history-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .history-container::-webkit-scrollbar-thumb {
+            background-color: var(--secondary);
+            border-radius: 6px;
+        }
+        
+        /* Animación del cursor */
+        .cursor-blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center justify-center p-4">
+    <div class="particles"></div>
+    
+    <div class="w-full max-w-md calculator-body bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-2xl">
+        <!-- Encabezado -->
+        <div class="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex justify-between items-center">
+            <h1 class="text-xl font-bold">Calculadora Pro</h1>
+            <div class="theme-toggle" id="themeToggle">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Display -->
+        <div class="p-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+            <div id="expressionDisplay" class="font-mono text-lg h-8 overflow-x-auto whitespace-nowrap text-right display-fade"></div>
+            <div id="resultDisplay" class="font-mono text-3xl font-bold text-right mt-1 h-10 overflow-hidden">0</div>
+        </div>
+        
+        <!-- Panel lateral/superior para mostrar pasos e historial -->
+        <div class="flex flex-col md:flex-row">
+            <!-- Area de explicación paso a paso -->
+            <div class="w-full md:w-1/2 p-4 bg-gray-100 dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700">
+                <h3 class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-2">Desarrollo de los cálculos</h3>
+                <div id="stepsDisplay" class="text-sm h-36 overflow-y-auto">
+                    <div class="text-gray-500 dark:text-gray-400 text-center italic">Los pasos del cálculo aparecerán aquí</div>
+                </div>
+            </div>
+            
+            <!-- Historial -->
+            <div class="w-full md:w-1/2 p-4 bg-gray-50 dark:bg-gray-900">
+                <h3 class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-2">Historial</h3>
+                <div id="historyDisplay" class="history-container text-sm h-36 overflow-y-auto">
+                    <div class="text-gray-500 dark:text-gray-400 text-center italic">Tu historial aparecerá aquí</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones de la calculadora -->
+        <div class="grid grid-cols-4 gap-1 p-3 bg-gray-100 dark:bg-gray-800">
+            <!-- Primera fila -->
+            <div class="calculator-key bg-red-500 text-white rounded-lg flex items-center justify-center h-14 font-medium" data-action="clear">AC</div>
+            <div class="calculator-key bg-amber-500 text-white rounded-lg flex items-center justify-center h-14 font-medium" data-action="brackets">()</div>
+            <div class="calculator-key bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-action="percentage">%</div>
+            <div class="calculator-key operator text-white rounded-lg flex items-center justify-center h-14 font-medium" data-action="divide">÷</div>
+            
+            <!-- Segunda fila -->
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="7">7</div>
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="8">8</div>
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="9">9</div>
+            <div class="calculator-key operator text-white rounded-lg flex items-center justify-center h-14 font-medium" data-action="multiply">×</div>
+            
+            <!-- Tercera fila -->
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="4">4</div>
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="5">5</div>
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="6">6</div>
+            <div class="calculator-key operator text-white rounded-lg flex items-center justify-center h-14 font-medium" data-action="subtract">−</div>
+            
+            <!-- Cuarta fila -->
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="1">1</div>
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="2">2</div>
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="3">3</div>
+            <div class="calculator-key operator text-white rounded-lg flex items-center justify-center h-14 font-medium" data-action="add">+</div>
+            
+            <!-- Quinta fila -->
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-action="power">x<sup>y</sup></div>
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-number="0">0</div>
+            <div class="calculator-key bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center h-14 font-medium" data-action="decimal">.</div>
+            <div class="calculator-key equals text-white rounded-lg flex items-center justify-center h-14 font-bold" data-action="calculate">=</div>
+        </div>
+        
+        <!-- Botones de funciones adicionales -->
+        <div class="grid grid-cols-4 gap-1 p-3 pt-0 bg-gray-100 dark:bg-gray-800">
+            <div class="calculator-key bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-lg flex items-center justify-center h-10 text-sm font-medium" data-action="sin">sin</div>
+            <div class="calculator-key bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-lg flex items-center justify-center h-10 text-sm font-medium" data-action="cos">cos</div>
+            <div class="calculator-key bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-lg flex items-center justify-center h-10 text-sm font-medium" data-action="tan">tan</div>
+            <div class="calculator-key bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-lg flex items-center justify-center h-10 text-sm font-medium" data-action="sqrt">√</div>
+        </div>
+    </div>
+
+    <!-- Lottie animación flotante -->
+    <div class="absolute bottom-4 right-4 w-24 h-24 opacity-50 pointer-events-none">
+        <lottie-player src="https://assets5.lottiefiles.com/packages/lf20_w51pcehl.json" background="transparent" speed="0.6" loop autoplay></lottie-player>
+    </div>
+
+    <script>
+        // Modo oscuro/claro
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // Crear partículas
+        function createParticles() {
+            const container = document.querySelector('.particles');
+            const colors = ['#5D5CDE', '#4a49b1', '#9f9efa', '#ff7e67'];
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                particle.style.width = Math.random() * 10 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.opacity = Math.random() * 0.15;
+                particle.style.animationDuration = Math.random() * 10 + 15 + 's';
+                container.appendChild(particle);
+                
+                setInterval(() => {
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.transition = 'left ' + (Math.random() * 5 + 15) + 's ease, top ' + (Math.random() * 5 + 15) + 's ease';
+                }, 20000);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Variables
+            const expressionDisplay = document.getElementById('expressionDisplay');
+            const resultDisplay = document.getElementById('resultDisplay');
+            const stepsDisplay = document.getElementById('stepsDisplay');
+            const historyDisplay = document.getElementById('historyDisplay');
+            const themeToggle = document.getElementById('themeToggle');
+            
+            let currentExpression = '';
+            let lastResult = '0';
+            let bracketCount = 0;
+            let waitingForSecondOperand = false;
+
+            // Inicializar partículas
+            createParticles();
+            
+            // Activar/desactivar modo oscuro
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                themeToggle.classList.add('result-animation');
+                setTimeout(() => {
+                    themeToggle.classList.remove('result-animation');
+                }, 500);
+            });
+            
+            // Función para mostrar la expresión actual
+            function updateExpressionDisplay() {
+                let formattedExpression = currentExpression
+                    .replace(/\*/g, ' × ')
+                    .replace(/\//g, ' ÷ ')
+                    .replace(/\+/g, ' + ')
+                    .replace(/-/g, ' − ')
+                    .replace(/\^/g, '^');
+                
+                expressionDisplay.textContent = formattedExpression;
+                expressionDisplay.scrollLeft = expressionDisplay.scrollWidth;
+                expressionDisplay.classList.add('display-fade');
+                setTimeout(() => expressionDisplay.classList.remove('display-fade'), 400);
+            }
+            
+            // Función para mostrar el resultado
+            function updateResultDisplay(value) {
+                resultDisplay.textContent = value;
+                resultDisplay.classList.add('result-animation');
+                setTimeout(() => resultDisplay.classList.remove('result-animation'), 500);
+            }
+            
+            // Función para agregar números a la expresión
+            function appendNumber(number) {
+                if (waitingForSecondOperand) {
+                    currentExpression = number;
+                    waitingForSecondOperand = false;
+                } else {
+                    currentExpression += number;
+                }
+                updateExpressionDisplay();
+            }
+            
+            // Función para agregar operadores a la expresión
+            function appendOperator(operator) {
+                const lastChar = currentExpression.slice(-1);
+                
+                // Evitar operadores duplicados
+                if (['+', '-', '*', '/', '^'].includes(lastChar)) {
+                    currentExpression = currentExpression.slice(0, -1) + operator;
+                } else {
+                    currentExpression += operator;
+                }
+                
+                waitingForSecondOperand = false;
+                updateExpressionDisplay();
+            }
+            
+            // Función para agregar paréntesis
+            function appendBracket() {
+                if (bracketCount === 0 || currentExpression.slice(-1) === '(' || 
+                    ['+', '-', '*', '/', '^'].includes(currentExpression.slice(-1))) {
+                    currentExpression += '(';
+                    bracketCount++;
+                } else {
+                    currentExpression += ')';
+                    bracketCount--;
+                }
+                updateExpressionDisplay();
+            }
+            
+            // Función para agregar decimales
+            function appendDecimal() {
+                // Si está esperando el segundo operando, comience un nuevo número con decimal
+                if (waitingForSecondOperand) {
+                    currentExpression = '0.';
+                    waitingForSecondOperand = false;
+                    updateExpressionDisplay();
+                    return;
+                }
+                
+                // Si la expresión está vacía, agregue '0.'
+                if (currentExpression === '') {
+                    currentExpression = '0.';
+                    updateExpressionDisplay();
+                    return;
+                }
+                
+                // Extraer el último número de la expresión
+                const regex = /[0-9.]+$/;
+                const match = currentExpression.match(regex);
+                
+                // Si no hay un número al final o el número ya tiene un decimal, no haga nada
+                if (!match || match[0].includes('.')) {
+                    return;
+                }
+                
+                // Agregue el decimal al último número
+                currentExpression += '.';
+                updateExpressionDisplay();
+            }
+            
+            // Función para calcular porcentajes
+            function calculatePercentage() {
+                if (currentExpression === '') return;
+                
+                try {
+                    const value = math.evaluate(currentExpression);
+                    currentExpression = String(value / 100);
+                    updateExpressionDisplay();
+                    updateResultDisplay(currentExpression);
+                } catch (error) {
+                    updateResultDisplay('Error');
+                }
+            }
+            
+            // Función para mostrar los pasos de cálculo
+            function showCalculationSteps(expression) {
+                stepsDisplay.innerHTML = '';
+                
+                if (!expression || expression === '') {
+                    stepsDisplay.innerHTML = '<div class="text-gray-500 dark:text-gray-400 text-center italic">Los pasos del cálculo aparecerán aquí</div>';
+                    return;
+                }
+                
+                // Crear un título para el paso a paso
+                const stepTitle = document.createElement('div');
+                stepTitle.className = 'font-medium mb-2 text-indigo-600 dark:text-indigo-400';
+                stepTitle.textContent = 'Desarrollo paso a paso:';
+                stepsDisplay.appendChild(stepTitle);
+                
+                try {
+                    let formattedExpression = expression
+                        .replace(/\*/g, '×')
+                        .replace(/\//g, '÷')
+                        .replace(/\+/g, '+')
+                        .replace(/-/g, '−')
+                        .replace(/\^/g, '^')
+                        .replace(/sin/g, 'sin')
+                        .replace(/cos/g, 'cos')
+                        .replace(/tan/g, 'tan')
+                        .replace(/sqrt/g, '√');
+                    
+                    // Crear el primer paso (la expresión inicial)
+                    const initialStep = document.createElement('div');
+                    initialStep.className = 'mb-2 step-animation';
+                    initialStep.innerHTML = `<span class="font-medium">Expresión:</span> ${formattedExpression}`;
+                    stepsDisplay.appendChild(initialStep);
+                    
+                    // Analizar la expresión para mostrar los pasos
+                    const tokens = math.parse(expression);
+                    
+                    // Función recursiva para mostrar los pasos de operaciones complejas
+                    function processNode(node, depth = 0) {
+                        let steps = [];
+                        
+                        if (node.type === 'OperatorNode') {
+                            const leftSteps = processNode(node.args[0], depth + 1);
+                            const rightSteps = processNode(node.args[1], depth + 1);
+                            
+                            let leftValue, rightValue;
+                            
+                            // Obtener valores de los operandos
+                            if (leftSteps.length > 0) {
+                                leftValue = leftSteps[leftSteps.length - 1].result;
+                            } else {
+                                leftValue = math.evaluate(node.args[0].toString());
+                            }
+                            
+                            if (rightSteps.length > 0) {
+                                rightValue = rightSteps[rightSteps.length - 1].result;
+                            } else {
+                                rightValue = math.evaluate(node.args[1].toString());
+                            }
+                            
+                            // Operador en formato amigable
+                            const opMap = {
+                                '+': '+',
+                                '-': '−',
+                                '*': '×',
+                                '/': '÷',
+                                '^': '^'
+                            };
+                            
+                            const operator = opMap[node.op] || node.op;
+                            
+                            // Calcular el resultado de esta operación
+                            let result;
+                            switch (node.op) {
+                                case '+': result = leftValue + rightValue; break;
+                                case '-': result = leftValue - rightValue; break;
+                                case '*': result = leftValue * rightValue; break;
+                                case '/': result = leftValue / rightValue; break;
+                                case '^': result = Math.pow(leftValue, rightValue); break;
+                                default: result = math.evaluate(`${leftValue}${node.op}${rightValue}`);
+                            }
+                            
+                            // Añadir todos los pasos previos
+                            steps = [...leftSteps, ...rightSteps];
+                            
+                            // Añadir el paso actual
+                            steps.push({
+                                explanation: `${leftValue} ${operator} ${rightValue} = ${result}`,
+                                result: result
+                            });
+                            
+                            return steps;
+                        } else if (node.type === 'FunctionNode') {
+                            const argSteps = processNode(node.args[0], depth + 1);
+                            let argValue;
+                            
+                            if (argSteps.length > 0) {
+                                argValue = argSteps[argSteps.length - 1].result;
+                            } else {
+                                argValue = math.evaluate(node.args[0].toString());
+                            }
+                            
+                            let result;
+                            let funcName = node.fn.name;
+                            
+                            // Calcular el resultado de esta función
+                            switch (funcName) {
+                                case 'sin': result = Math.sin(argValue); break;
+                                case 'cos': result = Math.cos(argValue); break;
+                                case 'tan': result = Math.tan(argValue); break;
+                                case 'sqrt': 
+                                    funcName = '√';
+                                    result = Math.sqrt(argValue); 
+                                    break;
+                                default: result = math.evaluate(`${funcName}(${argValue})`);
+                            }
+                            
+                            // Añadir todos los pasos previos
+                            steps = [...argSteps];
+                            
+                            // Añadir el paso actual
+                            steps.push({
+                                explanation: `${funcName}(${argValue}) = ${result}`,
+                                result: result
+                            });
+                            
+                            return steps;
+                        } else if (node.type === 'ParenthesisNode') {
+                            // Para nodos con paréntesis, procesar el contenido
+                            return processNode(node.content, depth);
+                        } else {
+                            // Para nodos simples (números, etc.)
+                            return [];
+                        }
+                    }
+                    
+                    // Procesar la expresión y obtener los pasos
+                    const steps = processNode(tokens);
+                    
+                    // Mostrar cada paso con animación
+                    steps.forEach((step, index) => {
+                        setTimeout(() => {
+                            const stepElement = document.createElement('div');
+                            stepElement.className = 'mb-2 step-animation bg-white dark:bg-gray-700 p-2 rounded-lg shadow-sm';
+                            stepElement.textContent = step.explanation;
+                            stepsDisplay.appendChild(stepElement);
+                            
+                            // Hacer scroll hacia abajo
+                            stepsDisplay.scrollTop = stepsDisplay.scrollHeight;
+                            
+                            // Añadir clase para destacar el paso
+                            stepElement.classList.add('highlight-step');
+                        }, index * 300);
+                    });
+                    
+                    // Mostrar el resultado final
+                    setTimeout(() => {
+                        const finalStep = document.createElement('div');
+                        finalStep.className = 'mt-3 font-bold text-green-600 dark:text-green-400 step-animation';
+                        finalStep.textContent = `Resultado final: ${math.evaluate(expression)}`;
+                        stepsDisplay.appendChild(finalStep);
+                        stepsDisplay.scrollTop = stepsDisplay.scrollHeight;
+                    }, steps.length * 300);
+                    
+                } catch (error) {
+                    const errorStep = document.createElement('div');
+                    errorStep.className = 'text-red-500 italic';
+                    errorStep.textContent = 'No se pudo analizar la expresión para mostrar los pasos.';
+                    stepsDisplay.appendChild(errorStep);
+                }
+            }
+            
+            // Función para agregar al historial
+            function addToHistory(expression, result) {
+                if (historyDisplay.querySelector('.text-gray-500')) {
+                    historyDisplay.innerHTML = '';
+                }
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'p-2 mb-2 bg-white dark:bg-gray-700 rounded-lg shadow-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors step-animation';
+                
+                let formattedExpression = expression
+                    .replace(/\*/g, ' × ')
+                    .replace(/\//g, ' ÷ ')
+                    .replace(/\+/g, ' + ')
+                    .replace(/-/g, ' − ')
+                    .replace(/\^/g, '^');
+                
+                historyItem.innerHTML = `
+                    <div class="text-xs text-gray-500 dark:text-gray-400">${formattedExpression}</div>
+                    <div class="font-medium">${result}</div>
+                `;
+                
+                // Al hacer clic en un elemento del historial, cargar esa expresión
+                historyItem.addEventListener('click', () => {
+                    currentExpression = expression;
+                    updateExpressionDisplay();
+                    updateResultDisplay(result);
+                    showCalculationSteps(expression);
+                    
+                    // Animar el elemento seleccionado
+                    historyItem.classList.add('bg-indigo-50', 'dark:bg-indigo-900');
+                    setTimeout(() => {
+                        historyItem.classList.remove('bg-indigo-50', 'dark:bg-indigo-900');
+                    }, 300);
+                });
+                
+                historyDisplay.prepend(historyItem);
+            }
+            
+            // Función para calcular el resultado
+            function calculate() {
+                if (currentExpression === '') {
+                    return;
+                }
+                
+                try {
+                    // Asegurarse de cerrar todos los paréntesis abiertos
+                    let calculationExpression = currentExpression;
+                    for (let i = 0; i < bracketCount; i++) {
+                        calculationExpression += ')';
+                    }
+                    
+                    const result = math.evaluate(calculationExpression);
+                    const formattedResult = Number.isInteger(result) ? result.toString() : result.toFixed(8).replace(/\.?0+$/, '');
+                    
+                    // Mostrar el resultado y los pasos de cálculo
+                    updateResultDisplay(formattedResult);
+                    showCalculationSteps(calculationExpression);
+                    
+                    // Agregar a historial
+                    addToHistory(calculationExpression, formattedResult);
+                    
+                    // Guardar el resultado para la siguiente operación
+                    lastResult = formattedResult;
+                    currentExpression = formattedResult;
+                    bracketCount = 0;
+                    waitingForSecondOperand = true;
+                } catch (error) {
+                    updateResultDisplay('Error');
+                }
+            }
+            
+            // Función para limpiar la calculadora
+            function clear() {
+                currentExpression = '';
+                updateExpressionDisplay();
+                updateResultDisplay('0');
+                bracketCount = 0;
+                waitingForSecondOperand = false;
+                
+                // Limpiar área de pasos
+                stepsDisplay.innerHTML = '<div class="text-gray-500 dark:text-gray-400 text-center italic">Los pasos del cálculo aparecerán aquí</div>';
+            }
+            
+            // Función para agregar una función matemática
+            function appendFunction(func) {
+                currentExpression += `${func}(`;
+                bracketCount++;
+                updateExpressionDisplay();
+            }
+            
+            // Función para agregar operador de potencia
+            function appendPower() {
+                currentExpression += '^';
+                updateExpressionDisplay();
+            }
+            
+            // Agregar funcionalidad a los botones numéricos
+            document.querySelectorAll('[data-number]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const number = button.getAttribute('data-number');
+                    appendNumber(number);
+                });
+            });
+            
+            // Agregar funcionalidad a los botones de operadores
+            document.querySelectorAll('[data-action]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.getAttribute('data-action');
+                    
+                    switch (action) {
+                        case 'add':
+                            appendOperator('+');
+                            break;
+                        case 'subtract':
+                            appendOperator('-');
+                            break;
+                        case 'multiply':
+                            appendOperator('*');
+                            break;
+                        case 'divide':
+                            appendOperator('/');
+                            break;
+                        case 'decimal':
+                            appendDecimal();
+                            break;
+                        case 'clear':
+                            clear();
+                            break;
+                        case 'calculate':
+                            calculate();
+                            break;
+                        case 'brackets':
+                            appendBracket();
+                            break;
+                        case 'percentage':
+                            calculatePercentage();
+                            break;
+                        case 'sin':
+                            appendFunction('sin');
+                            break;
+                        case 'cos':
+                            appendFunction('cos');
+                            break;
+                        case 'tan':
+                            appendFunction('tan');
+                            break;
+                        case 'sqrt':
+                            appendFunction('sqrt');
+                            break;
+                        case 'power':
+                            appendPower();
+                            break;
+                    }
+                    
+                    // Animar el botón
+                    button.classList.add('bg-opacity-80');
+                    setTimeout(() => {
+                        button.classList.remove('bg-opacity-80');
+                    }, 100);
+                });
+            });
+            
+            // Agregar soporte para teclado
+            document.addEventListener('keydown', event => {
+                if ('0123456789'.includes(event.key)) {
+                    appendNumber(event.key);
+                } else if (event.key === '+') {
+                    appendOperator('+');
+                } else if (event.key === '-') {
+                    appendOperator('-');
+                } else if (event.key === '*') {
+                    appendOperator('*');
+                } else if (event.key === '/') {
+                    appendOperator('/');
+                } else if (event.key === '.') {
+                    appendDecimal();
+                } else if (event.key === 'Enter' || event.key === '=') {
+                    calculate();
+                } else if (event.key === 'Escape') {
+                    clear();
+                } else if (event.key === '(' || event.key === ')') {
+                    appendBracket();
+                } else if (event.key === '%') {
+                    calculatePercentage();
+                } else if (event.key === '^') {
+                    appendPower();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

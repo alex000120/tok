@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Aplicaciones Interactivas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        secondary: '#9333EA',
+                        accent: '#F59E0B',
+                        success: '#10B981',
+                        danger: '#EF4444',
+                        info: '#3B82F6'
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+                        'gradient': 'gradient 15s ease infinite',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'scale-in': 'scaleIn 0.3s ease-out'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        },
+                        'pulse-glow': {
+                            '0%, 100%': { boxShadow: '0 0 20px rgba(93, 92, 222, 0.3)' },
+                            '50%': { boxShadow: '0 0 40px rgba(93, 92, 222, 0.8)' }
+                        },
+                        gradient: {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' }
+                        },
+                        bounceIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.3)' },
+                            '50%': { opacity: '1', transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe, #00f2fe);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .glass-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+        
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            background: #667eea;
+            animation-delay: 0s;
+        }
+        
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 20%;
+            right: 10%;
+            background: #f093fb;
+            animation-delay: 2s;
+        }
+        
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            bottom: 20%;
+            left: 20%;
+            background: #4facfe;
+            animation-delay: 4s;
+        }
+        
+        .shape:nth-child(4) {
+            width: 100px;
+            height: 100px;
+            bottom: 10%;
+            right: 20%;
+            background: #f5576c;
+            animation-delay: 1s;
+        }
+        
+        .app-icon {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .feature-badge {
+            background: linear-gradient(135deg, rgba(93, 92, 222, 0.2), rgba(147, 51, 234, 0.2));
+            border: 1px solid rgba(93, 92, 222, 0.3);
+        }
+        
+        .stagger-animation {
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        .difficulty-easy { background: linear-gradient(135deg, #10B981, #34D399); }
+        .difficulty-medium { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
+        .difficulty-hard { background: linear-gradient(135deg, #EF4444, #F87171); }
+        .difficulty-expert { background: linear-gradient(135deg, #8B5CF6, #A78BFA); }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+    <!-- Floating Shapes Background -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <!-- Header Hero Section -->
+    <header class="hero-gradient relative overflow-hidden">
+        <div class="absolute inset-0 bg-black opacity-20"></div>
+        <div class="relative z-10 container mx-auto px-4 py-16 text-center text-white">
+            <div class="animate-bounce-in">
+                <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight">
+                    🚀 Portal de Aplicaciones
+                </h1>
+                <p class="text-xl md:text-2xl font-light mb-8 max-w-3xl mx-auto leading-relaxed">
+                    Descubre una colección única de aplicaciones interactivas, juegos y herramientas diseñadas para inspirar, educar y entretener
+                </p>
+                <div class="flex flex-wrap justify-center gap-4 text-sm md:text-base">
+                    <span class="feature-badge px-4 py-2 rounded-full">✨ Responsive Design</span>
+                    <span class="feature-badge px-4 py-2 rounded-full">🎮 Juegos Interactivos</span>
+                    <span class="feature-badge px-4 py-2 rounded-full">🛠️ Herramientas Útiles</span>
+                    <span class="feature-badge px-4 py-2 rounded-full">🎨 UI Moderna</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Theme Toggle -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="themeToggle" class="glass-card p-3 rounded-full text-2xl hover:scale-110 transition-all duration-300">
+            <span class="dark:hidden">🌙</span>
+            <span class="hidden dark:inline">☀️</span>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-16 relative z-10">
+        <!-- Statistics Section -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+            <div class="glass-card p-6 rounded-2xl text-center stagger-animation">
+                <div class="text-3xl font-bold text-primary mb-2">8</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Aplicaciones</div>
+            </div>
+            <div class="glass-card p-6 rounded-2xl text-center stagger-animation" style="animation-delay: 0.1s">
+                <div class="text-3xl font-bold text-success mb-2">100%</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Responsive</div>
+            </div>
+            <div class="glass-card p-6 rounded-2xl text-center stagger-animation" style="animation-delay: 0.2s">
+                <div class="text-3xl font-bold text-accent mb-2">5</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Categorías</div>
+            </div>
+            <div class="glass-card p-6 rounded-2xl text-center stagger-animation" style="animation-delay: 0.3s">
+                <div class="text-3xl font-bold text-danger mb-2">∞</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Diversión</div>
+            </div>
+        </section>
+
+        <!-- Applications Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            
+            <!-- TikTok Video Player -->
+            <article class="glass-card rounded-3xl overflow-hidden card-hover stagger-animation">
+                <div class="relative h-48 bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
+                    <div class="app-icon w-20 h-20 rounded-2xl flex items-center justify-center text-4xl">🎬</div>
+                    <div class="absolute top-4 right-4">
+                        <span class="difficulty-medium text-white text-xs px-2 py-1 rounded-full font-semibold">Multimedia</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-3">TikTok Pro Player</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Reproductor de videos estilo TikTok con navegación vertical fluida, controles de volumen y efectos visuales modernos.
+                    </p>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm mb-2">📖 Cómo usar:</h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                            <li>• Desliza hacia arriba/abajo para cambiar videos</li>
+                            <li>• Toca el video para pausar/reproducir</li>
+                            <li>• Usa los controles laterales para interactuar</li>
+                            <li>• Ajusta el volumen con el slider vertical</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.open('tok.html', '_blank')" 
+                            class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        🚀 Abrir App
+                    </button>
+                </div>
+            </article>
+
+            <!-- AI Neural Trainer -->
+            <article class="glass-card rounded-3xl overflow-hidden card-hover stagger-animation" style="animation-delay: 0.1s">
+                <div class="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <div class="app-icon w-20 h-20 rounded-2xl flex items-center justify-center text-4xl">🧠</div>
+                    <div class="absolute top-4 right-4">
+                        <span class="difficulty-hard text-white text-xs px-2 py-1 rounded-full font-semibold">IA/Educativo</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-3">AI Neural Trainer</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Simulador de entrenamiento de IA con desafíos de reconocimiento de patrones, clasificación y memoria para fortalecer conexiones neuronales.
+                    </p>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm mb-2">🎯 Objetivo:</h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                            <li>• Completa desafíos de reconocimiento de patrones</li>
+                            <li>• Clasifica datos correctamente</li>
+                            <li>• Entrena tu memoria neural</li>
+                            <li>• Aumenta tu IQ y precisión</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.open('ia.html', '_blank')" 
+                            class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        🧠 Entrenar IA
+                    </button>
+                </div>
+            </article>
+
+            <!-- Dino Street Crossing -->
+            <article class="glass-card rounded-3xl overflow-hidden card-hover stagger-animation" style="animation-delay: 0.2s">
+                <div class="relative h-48 bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center">
+                    <div class="app-icon w-20 h-20 rounded-2xl flex items-center justify-center text-4xl">🦕</div>
+                    <div class="absolute top-4 right-4">
+                        <span class="difficulty-medium text-white text-xs px-2 py-1 rounded-full font-semibold">Arcade</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-3">Dino Street Crossing</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Juego de arcade móvil donde ayudas a un adorable dinosaurio a cruzar calles peligrosas llenas de tráfico con power-ups especiales.
+                    </p>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm mb-2">🎮 Controles:</h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                            <li>• Usa los botones direccionales para mover</li>
+                            <li>• Evita ser atropellado por vehículos</li>
+                            <li>• Recolecta power-ups especiales</li>
+                            <li>• Cruza todas las calles para ganar</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.open('dino.html', '_blank')" 
+                            class="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        🦕 Jugar Ahora
+                    </button>
+                </div>
+            </article>
+
+            <!-- Calculadora Profesional -->
+            <article class="glass-card rounded-3xl overflow-hidden card-hover stagger-animation" style="animation-delay: 0.3s">
+                <div class="relative h-48 bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                    <div class="app-icon w-20 h-20 rounded-2xl flex items-center justify-center text-4xl">🧮</div>
+                    <div class="absolute top-4 right-4">
+                        <span class="difficulty-easy text-white text-xs px-2 py-1 rounded-full font-semibold">Herramientas</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-3">Calculadora Pro</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Calculadora avanzada con funciones científicas, desarrollo paso a paso de operaciones, historial y soporte para operaciones complejas.
+                    </p>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm mb-2">⚡ Características:</h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                            <li>• Operaciones básicas y científicas</li>
+                            <li>• Desarrollo paso a paso visible</li>
+                            <li>• Historial de cálculos</li>
+                            <li>• Funciones trigonométricas</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.open('calculadora.html', '_blank')" 
+                            class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        🧮 Calcular
+                    </button>
+                </div>
+            </article>
+
+            <!-- Stellar Collector -->
+            <article class="glass-card rounded-3xl overflow-hidden card-hover stagger-animation" style="animation-delay: 0.4s">
+                <div class="relative h-48 bg-gradient-to-br from-indigo-600 to-purple-800 flex items-center justify-center">
+                    <div class="app-icon w-20 h-20 rounded-2xl flex items-center justify-center text-4xl">🌌</div>
+                    <div class="absolute top-4 right-4">
+                        <span class="difficulty-medium text-white text-xs px-2 py-1 rounded-full font-semibold">Espacial</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-3">Stellar Collector</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Juego espacial donde piloteas una nave recolectando estrellas y planetas mientras evitas agujeros negros en un universo infinito.
+                    </p>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm mb-2">🚀 Misión:</h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                            <li>• Mueve tu nave con el mouse/táctil</li>
+                            <li>• Recolecta estrellas (10 pts) y planetas (50 pts)</li>
+                            <li>• Evita los agujeros negros mortales</li>
+                            <li>• Usa power-ups de escudo y propulsor</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.open('astronomy.html', '_blank')" 
+                            class="w-full bg-gradient-to-r from-indigo-600 to-purple-800 hover:from-indigo-700 hover:to-purple-900 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        🌌 Explorar
+                    </button>
+                </div>
+            </article>
+
+            <!-- Adivino Tu Número -->
+            <article class="glass-card rounded-3xl overflow-hidden card-hover stagger-animation" style="animation-delay: 0.5s">
+                <div class="relative h-48 bg-gradient-to-br from-pink-500 to-red-500 flex items-center justify-center">
+                    <div class="app-icon w-20 h-20 rounded-2xl flex items-center justify-center text-4xl">🔮</div>
+                    <div class="absolute top-4 right-4">
+                        <span class="difficulty-easy text-white text-xs px-2 py-1 rounded-full font-semibold">Mágico</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-3">Adivino Místico</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Experiencia mágica e interactiva donde la "IA" lee tu mente y adivina el número que estás pensando con efectos visuales únicos.
+                    </p>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm mb-2">🎭 Experiencia:</h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                            <li>• Piensa un número del 1 al 20</li>
+                            <li>• Observa el proceso de "análisis mental"</li>
+                            <li>• Disfruta de los efectos visuales</li>
+                            <li>• ¡Prepárate para sorprenderte!</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.open('adivino.html', '_blank')" 
+                            class="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        🔮 Leer Mente
+                    </button>
+                </div>
+            </article>
+
+            <!-- Garden Harmony -->
+            <article class="glass-card rounded-3xl overflow-hidden card-hover stagger-animation" style="animation-delay: 0.6s">
+                <div class="relative h-48 bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
+                    <div class="app-icon w-20 h-20 rounded-2xl flex items-center justify-center text-4xl">🌸</div>
+                    <div class="absolute top-4 right-4">
+                        <span class="difficulty-hard text-white text-xs px-2 py-1 rounded-full font-semibold">Puzzle</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-3">Garden Harmony</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Puzzle de ecosistemas donde creas cadenas alimentarias conectando flores, insectos y animales para mantener el equilibrio natural.
+                    </p>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm mb-2">🌿 Mecánicas:</h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                            <li>• Conecta elementos en cadenas lógicas</li>
+                            <li>• Flor → Insecto → Animal</li>
+                            <li>• Completa 3+ cadenas por nivel</li>
+                            <li>• Usa pistas y mezcla elementos</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.open('jardin.html', '_blank')"
+                            class="w-full bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        🌸 Crear Jardín
+                    </button>
+                </div>
+            </article>
+
+            <!-- PlantCare -->
+            <article class="glass-card rounded-3xl overflow-hidden card-hover stagger-animation" style="animation-delay: 0.7s">
+                <div class="relative h-48 bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                    <div class="app-icon w-20 h-20 rounded-2xl flex items-center justify-center text-4xl">🌱</div>
+                    <div class="absolute top-4 right-4">
+                        <span class="difficulty-medium text-white text-xs px-2 py-1 rounded-full font-semibold">Simulación</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-3">PlantCare Virtual</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                        Simulador de cuidado de plantas donde debes mantener viva una plantita virtual durante 2 minutos, enseñando sobre responsabilidad.
+                    </p>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm mb-2">🌿 Cuidados:</h4>
+                        <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                            <li>• Riega según las necesidades</li>
+                            <li>• Ajusta la luz solar adecuada</li>
+                            <li>• Fertiliza en el momento correcto</li>
+                            <li>• Habla con tu planta para animarla</li>
+                        </ul>
+                    </div>
+                    <button onclick="window.open('planta.html', '_blank')" 
+                            class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                        🌱 Cuidar Planta
+                    </button>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- Footer Info -->
+        <footer class="mt-16 text-center">
+            <div class="glass-card p-8 rounded-3xl">
+                <h3 class="text-2xl font-bold mb-4">💫 Tecnologías Utilizadas</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-xl">
+                        <div class="text-2xl mb-2">🎨</div>
+                        <div class="font-semibold">TailwindCSS</div>
+                        <div class="text-gray-600 dark:text-gray-400">Diseño Responsivo</div>
+                    </div>
+                    <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-xl">
+                        <div class="text-2xl mb-2">⚡</div>
+                        <div class="font-semibold">JavaScript</div>
+                        <div class="text-gray-600 dark:text-gray-400">Interactividad</div>
+                    </div>
+                    <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-xl">
+                        <div class="text-2xl mb-2">🎯</div>
+                        <div class="font-semibold">CSS Avanzado</div>
+                        <div class="text-gray-600 dark:text-gray-400">Animaciones</div>
+                    </div>
+                    <div class="bg-green-100 dark:bg-green-900 p-3 rounded-xl">
+                        <div class="text-2xl mb-2">📱</div>
+                        <div class="font-semibold">Mobile First</div>
+                        <div class="text-gray-600 dark:text-gray-400">Adaptativo</div>
+                    </div>
+                </div>
+                <p class="mt-6 text-gray-600 dark:text-gray-400">
+                    Todas las aplicaciones están optimizadas para dispositivos móviles y de escritorio
+                </p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // Dark mode detection and toggle
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // Animate cards on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'slideUp 0.5s ease-out forwards';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all cards
+        document.querySelectorAll('article').forEach(card => {
+            observer.observe(card);
+        });
+
+        // Add stagger animation delay to cards
+        document.querySelectorAll('article').forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+
+        // Smooth scroll for any internal links
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A' && e.target.getAttribute('href').startsWith('#')) {
+                e.preventDefault();
+                const target = document.querySelector(e.target.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
+        });
+
+        // Add pulse effect to buttons on hover
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                button.style.animation = 'pulse-glow 1s ease-in-out infinite';
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.animation = '';
+            });
+        });
+
+        // Create floating particles effect
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.style.position = 'fixed';
+            particle.style.width = '4px';
+            particle.style.height = '4px';
+            particle.style.backgroundColor = '#5D5CDE';
+            particle.style.borderRadius = '50%';
+            particle.style.pointerEvents = 'none';
+            particle.style.opacity = '0.6';
+            particle.style.left = Math.random() * window.innerWidth + 'px';
+            particle.style.top = window.innerHeight + 'px';
+            particle.style.zIndex = '1';
+            
+            document.body.appendChild(particle);
+            
+            const animation = particle.animate([
+                { transform: 'translateY(0px)', opacity: 0.6 },
+                { transform: `translateY(-${window.innerHeight + 100}px)`, opacity: 0 }
+            ], {
+                duration: 3000 + Math.random() * 2000,
+                easing: 'linear'
+            });
+            
+            animation.onfinish = () => particle.remove();
+        }
+
+        // Create particles periodically
+        setInterval(createParticle, 2000);
+    </script>
+</body>
+</html>

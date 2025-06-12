@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🦕 Dino Street Crossing Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #87CEEB, #98FB98, #FFE4B5);
+            font-family: 'Comic Sans MS', cursive;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 10px;
+        }
+
+        .game-title {
+            font-size: clamp(1.5em, 6vw, 2.2em);
+            color: #4a4a4a;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            animation: bounce 2s infinite;
+            text-align: center;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .game-container {
+            position: relative;
+            width: min(400px, 95vw);
+            height: min(600px, 70vh);
+            border: 3px solid #8B4513;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #228B22;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            touch-action: none;
+        }
+
+        .road {
+            position: absolute;
+            width: 100%;
+            height: 15%;
+            background: linear-gradient(90deg, #333 0%, #444 50%, #333 100%);
+            border-top: 2px dashed #FFF;
+            border-bottom: 2px dashed #FFF;
+        }
+
+        .road:nth-child(2) { top: 20%; }
+        .road:nth-child(3) { top: 40%; }
+        .road:nth-child(4) { top: 60%; }
+        .road:nth-child(5) { top: 80%; }
+
+        .dino {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            font-size: clamp(25px, 8vw, 35px);
+            left: 50%;
+            bottom: 5%;
+            transform: translateX(-50%);
+            transition: all 0.15s ease-out;
+            z-index: 100;
+            animation: wiggle 1.5s infinite;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: translateX(-50%) rotate(-2deg) scale(1); }
+            25% { transform: translateX(-50%) rotate(1deg) scale(1.05); }
+            50% { transform: translateX(-50%) rotate(2deg) scale(1); }
+            75% { transform: translateX(-50%) rotate(-1deg) scale(1.05); }
+        }
+
+        .vehicle {
+            position: absolute;
+            font-size: clamp(20px, 6vw, 30px);
+            z-index: 50;
+            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
+            animation: moveLeft linear;
+        }
+
+        .vehicle.right {
+            animation: moveRight linear;
+        }
+
+        @keyframes moveLeft {
+            from { left: 100%; }
+            to { left: -15%; }
+        }
+
+        @keyframes moveRight {
+            from { left: -15%; }
+            to { left: 100%; }
+        }
+
+        .hud {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            color: white;
+            font-size: clamp(12px, 3.5vw, 16px);
+            background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(50,50,50,0.8));
+            padding: 8px 12px;
+            border-radius: 12px;
+            z-index: 200;
+            display: flex;
+            justify-content: space-between;
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .game-over, .victory {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(255,0,0,0.95), rgba(200,0,0,0.95));
+            color: white;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: clamp(16px, 4vw, 20px);
+            z-index: 300;
+            display: none;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            animation: popIn 0.5s ease-out;
+            max-width: 90%;
+        }
+
+        .victory {
+            background: linear-gradient(135deg, rgba(0,255,0,0.95), rgba(0,200,0,0.95));
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 10px;
+            width: min(280px, 80vw);
+            height: min(280px, 35vh);
+            z-index: 400;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: clamp(20px, 6vw, 30px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .control-btn:active {
+            transform: scale(0.9);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 3; }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: clamp(14px, 4vw, 18px);
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .restart-btn:active {
+            transform: scale(0.95);
+        }
+
+        .grass-strip {
+            position: absolute;
+            width: 100%;
+            height: 8%;
+            background: linear-gradient(90deg, #32CD32, #228B22, #32CD32);
+        }
+
+        .grass-strip:nth-child(6) { top: 12%; }
+        .grass-strip:nth-child(7) { top: 32%; }
+        .grass-strip:nth-child(8) { top: 52%; }
+        .grass-strip:nth-child(9) { top: 72%; }
+        .grass-strip:nth-child(10) { top: 92%; }
+
+        .particle {
+            position: absolute;
+            font-size: 20px;
+            pointer-events: none;
+            z-index: 150;
+            animation: particleFloat 1s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(0); opacity: 0; }
+        }
+
+        .combo {
+            position: absolute;
+            top: 20%;
+            right: 10px;
+            background: rgba(255,215,0,0.9);
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 250;
+            display: none;
+            animation: comboShow 2s ease-out;
+        }
+
+        @keyframes comboShow {
+            0% { transform: scale(0); opacity: 0; }
+            20% { transform: scale(1.2); opacity: 1; }
+            80% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .instructions {
+            text-align: center;
+            font-size: clamp(12px, 3vw, 14px);
+            color: #4a4a4a;
+            margin-top: 10px;
+            padding: 0 20px;
+        }
+
+        .power-up {
+            position: absolute;
+            font-size: 25px;
+            z-index: 80;
+            animation: powerUpFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes powerUpFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(180deg); }
+        }
+
+        /* Vibración para colisiones */
+        @keyframes vibrate {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: vibrate 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="game-title">🦕 DINO STREET CROSSING 🚗</h1>
+    
+    <div class="game-container" id="gameContainer">
+        <div class="grass-strip"></div>
+        <div class="road"></div>
+        <div class="grass-strip"></div>
+        <div class="road"></div>
+        <div class="grass-strip"></div>
+        <div class="road"></div>
+        <div class="grass-strip"></div>
+        <div class="road"></div>
+        <div class="grass-strip"></div>
+        
+        <div class="dino" id="dino">🦕</div>
+        
+        <div class="hud">
+            <div class="hud-item">❤️ <span id="lives">3</span></div>
+            <div class="hud-item">🏆 <span id="score">0</span></div>
+            <div class="hud-item">🎯 <span id="level">1</span></div>
+        </div>
+        
+        <div class="combo" id="combo"></div>
+        
+        <div class="game-over" id="gameOver">
+            <h2>¡AUCH! 😵💫</h2>
+            <p>¡El dino fue aplastado por el tráfico!</p>
+            <p id="finalScore"></p>
+            <button class="restart-btn" ontouchstart="" onclick="restartGame()">🔄 Intentar de Nuevo</button>
+        </div>
+        
+        <div class="victory" id="victory">
+            <h2>¡ÉPICO! 🎉✨</h2>
+            <p>¡Cruzaste todas las calles!</p>
+            <p>¡Nivel superado como un campeón!</p>
+            <button class="restart-btn" ontouchstart="" onclick="nextLevel()">➡️ Siguiente Nivel</button>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button class="control-btn up" ontouchstart="" data-direction="up">⬆️</button>
+        <button class="control-btn left" ontouchstart="" data-direction="left">⬅️</button>
+        <button class="control-btn right" ontouchstart="" data-direction="right">➡️</button>
+        <button class="control-btn down" ontouchstart="" data-direction="down">⬇️</button>
+    </div>
+    
+    <div class="instructions">
+        <p>🎮 <strong>Usa los botones para mover al dino</strong></p>
+        <p>🎯 ¡Cruza todas las calles sin ser atropellado!</p>
+    </div>
+
+    <script>
+        let dino = document.getElementById('dino');
+        let gameContainer = document.getElementById('gameContainer');
+        let gameOver = document.getElementById('gameOver');
+        let victory = document.getElementById('victory');
+        let combo = document.getElementById('combo');
+        
+        let dinoPosition = { x: 50, y: 5 }; // Porcentajes
+        let lives = 3;
+        let score = 0;
+        let level = 1;
+        let vehicles = [];
+        let powerUps = [];
+        let gameRunning = true;
+        let vehicleSpeed = 4000;
+        let invulnerable = false;
+        let comboCount = 0;
+        let lastMoveTime = 0;
+        
+        const vehicleEmojis = ['🚗', '🚙', '🚚', '🚛', '🚐', '🏎️', '🚕', '🚌', '🏍️'];
+        const dinoVariations = ['🦕', '🦖', '🐉', '🐲'];
+        const powerUpEmojis = ['⭐', '💎', '🛡️', '⚡'];
+        const crashEmojis = ['💥', '💫', '🌟', '💢'];
+        
+        // Configurar controles táctiles
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            btn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const direction = this.dataset.direction;
+                moveDino(direction);
+                this.style.transform = 'scale(0.9)';
+            });
+            
+            btn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                this.style.transform = 'scale(1)';
+            });
+            
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const direction = this.dataset.direction;
+                moveDino(direction);
+            });
+        });
+        
+        function createParticles(x, y, emoji) {
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    let particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.innerHTML = emoji;
+                    particle.style.left = (x + Math.random() * 40 - 20) + 'px';
+                    particle.style.top = (y + Math.random() * 40 - 20) + 'px';
+                    gameContainer.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    }, 1000);
+                }, i * 50);
+            }
+        }
+        
+        function showCombo(multiplier) {
+            combo.innerHTML = `🔥 COMBO x${multiplier}!`;
+            combo.style.display = 'block';
+            setTimeout(() => {
+                combo.style.display = 'none';
+            }, 2000);
+        }
+        
+        function vibrate() {
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+            gameContainer.classList.add('shake');
+            setTimeout(() => {
+                gameContainer.classList.remove('shake');
+            }, 500);
+        }
+        
+        function updateHUD() {
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+        }
+        
+        function moveDino(direction) {
+            if (!gameRunning || invulnerable) return;
+            
+            const currentTime = Date.now();
+            const containerRect = gameContainer.getBoundingClientRect();
+            const moveDistance = 100 / 6; // 6 posiciones verticales
+            
+            switch(direction) {
+                case 'up':
+                    if (dinoPosition.y < 85) {
+                        dinoPosition.y += moveDistance;
+                        score += 15;
+                        
+                        // Combo por movimientos rápidos
+                        if (currentTime - lastMoveTime < 800) {
+                            comboCount++;
+                            if (comboCount >= 3) {
+                                showCombo(comboCount);
+                                score += comboCount * 10;
+                            }
+                        } else {
+                            comboCount = 0;
+                        }
+                    }
+                    break;
+                case 'down':
+                    if (dinoPosition.y > 10) {
+                        dinoPosition.y -= moveDistance;
+                        score += 5;
+                    }
+                    break;
+                case 'left':
+                    if (dinoPosition.x > 5) {
+                        dinoPosition.x -= 15;
+                    }
+                    break;
+                case 'right':
+                    if (dinoPosition.x < 85) {
+                        dinoPosition.x += 15;
+                    }
+                    break;
+            }
+            
+            lastMoveTime = currentTime;
+            dino.style.left = dinoPosition.x + '%';
+            dino.style.bottom = dinoPosition.y + '%';
+            
+            // Verificar victoria
+            if (dinoPosition.y >= 85) {
+                gameRunning = false;
+                victory.style.display = 'block';
+                score += 200 * level;
+                createParticles(
+                    containerRect.width * dinoPosition.x / 100,
+                    containerRect.height * (100 - dinoPosition.y) / 100,
+                    '🎉'
+                );
+            }
+            
+            updateHUD();
+        }
+        
+        function createVehicle() {
+            if (!gameRunning) return;
+            
+            let vehicle = document.createElement('div');
+            vehicle.className = 'vehicle';
+            vehicle.innerHTML = vehicleEmojis[Math.floor(Math.random() * vehicleEmojis.length)];
+            
+            // Determinar carril (20%, 40%, 60%, 80%)
+            let lanes = [20, 40, 60, 80];
+            let laneIndex = Math.floor(Math.random() * lanes.length);
+            let isRightDirection = Math.random() > 0.5;
+            
+            vehicle.style.top = lanes[laneIndex] + '%';
+            
+            // Velocidad variable según el nivel
+            const duration = Math.max(2, 5 - level * 0.3) + Math.random() * 2;
+            vehicle.style.animationDuration = duration + 's';
+            
+            if (isRightDirection) {
+                vehicle.classList.add('right');
+            }
+            
+            gameContainer.appendChild(vehicle);
+            vehicles.push(vehicle);
+            
+            setTimeout(() => {
+                if (vehicle.parentNode) {
+                    vehicle.parentNode.removeChild(vehicle);
+                    vehicles = vehicles.filter(v => v !== vehicle);
+                }
+            }, (duration + 1) * 1000);
+        }
+        
+        function createPowerUp() {
+            if (!gameRunning || Math.random() > 0.3) return;
+            
+            let powerUp = document.createElement('div');
+            powerUp.className = 'power-up';
+            powerUp.innerHTML = powerUpEmojis[Math.floor(Math.random() * powerUpEmojis.length)];
+            
+            powerUp.style.left = (20 + Math.random() * 60) + '%';
+            powerUp.style.top = (25 + Math.random() * 50) + '%';
+            
+            gameContainer.appendChild(powerUp);
+            powerUps.push(powerUp);
+            
+            setTimeout(() => {
+                if (powerUp.parentNode) {
+                    powerUp.parentNode.removeChild(powerUp);
+                    powerUps = powerUps.filter(p => p !== powerUp);
+                }
+            }, 8000);
+        }
+        
+        function checkCollisions() {
+            if (!gameRunning || invulnerable) return;
+            
+            const dinoRect = dino.getBoundingClientRect();
+            
+            // Verificar colisiones con vehículos
+            vehicles.forEach(vehicle => {
+                const vehicleRect = vehicle.getBoundingClientRect();
+                
+                if (vehicleRect.left < dinoRect.right - 5 &&
+                    vehicleRect.right > dinoRect.left + 5 &&
+                    vehicleRect.top < dinoRect.bottom - 5 &&
+                    vehicleRect.bottom > dinoRect.top + 5) {
+                    
+                    // ¡Colisión!
+                    hitDino();
+                }
+            });
+            
+            // Verificar colisiones con power-ups
+            powerUps.forEach(powerUp => {
+                const powerUpRect = powerUp.getBoundingClientRect();
+                
+                if (powerUpRect.left < dinoRect.right &&
+                    powerUpRect.right > dinoRect.left &&
+                    powerUpRect.top < dinoRect.bottom &&
+                    powerUpRect.bottom > dinoRect.top) {
+                    
+                    collectPowerUp(powerUp);
+                }
+            });
+        }
+        
+        function hitDino() {
+            const crashEmoji = crashEmojis[Math.floor(Math.random() * crashEmojis.length)];
+            dino.innerHTML = crashEmoji;
+            vibrate();
+            
+            createParticles(
+                dinoPosition.x * gameContainer.offsetWidth / 100,
+                (100 - dinoPosition.y) * gameContainer.offsetHeight / 100,
+                '💥'
+            );
+            
+            lives--;
+            invulnerable = true;
+            
+            setTimeout(() => {
+                dino.innerHTML = dinoVariations[Math.floor(Math.random() * dinoVariations.length)];
+                invulnerable = false;
+            }, 1000);
+            
+            // Resetear posición
+            dinoPosition = { x: 50, y: 5 };
+            dino.style.left = dinoPosition.x + '%';
+            dino.style.bottom = dinoPosition.y + '%';
+            
+            if (lives <= 0) {
+                gameRunning = false;
+                document.getElementById('finalScore').textContent = 
+                    `🏆 Puntuación final: ${score} puntos\n🎯 Nivel alcanzado: ${level}`;
+                gameOver.style.display = 'block';
+            }
+            
+            updateHUD();
+        }
+        
+        function collectPowerUp(powerUp) {
+            const powerUpType = powerUp.innerHTML;
+            
+            createParticles(
+                parseInt(powerUp.style.left) * gameContainer.offsetWidth / 100,
+                parseInt(powerUp.style.top) * gameContainer.offsetHeight / 100,
+                '✨'
+            );
+            
+            switch(powerUpType) {
+                case '⭐':
+                    score += 50;
+                    break;
+                case '💎':
+                    score += 100;
+                    break;
+                case '🛡️':
+                    // Invulnerabilidad temporal
+                    invulnerable = true;
+                    dino.style.filter = 'drop-shadow(0 0 10px gold)';
+                    setTimeout(() => {
+                        invulnerable = false;
+                        dino.style.filter = 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))';
+                    }, 3000);
+                    break;
+                case '⚡':
+                    // Bonus de velocidad en puntos
+                    score += 25;
+                    break;
+            }
+            
+            powerUp.parentNode.removeChild(powerUp);
+            powerUps = powerUps.filter(p => p !== powerUp);
+            updateHUD();
+        }
+        
+        function gameLoop() {
+            if (gameRunning) {
+                checkCollisions();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        function startSpawning() {
+            // Spawning de vehículos
+            setInterval(() => {
+                if (gameRunning) {
+                    createVehicle();
+                }
+            }, Math.max(800, 2000 - level * 100));
+            
+            // Spawning de power-ups
+            setInterval(() => {
+                if (gameRunning) {
+                    createPowerUp();
+                }
+            }, 5000);
+        }
+        
+        function restartGame() {
+            gameRunning = true;
+            lives = 3;
+            score = 0;
+            level = 1;
+            comboCount = 0;
+            invulnerable = false;
+            dinoPosition = { x: 50, y: 5 };
+            
+            dino.style.left = dinoPosition.x + '%';
+            dino.style.bottom = dinoPosition.y + '%';
+            dino.innerHTML = '🦕';
+            dino.style.filter = 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))';
+            
+            gameOver.style.display = 'none';
+            victory.style.display = 'none';
+            combo.style.display = 'none';
+            
+            // Limpiar elementos
+            [...vehicles, ...powerUps].forEach(element => {
+                if (element.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+            });
+            vehicles = [];
+            powerUps = [];
+            
+            updateHUD();
+            gameLoop();
+        }
+        
+        function nextLevel() {
+            level++;
+            score += 300;
+            dinoPosition = { x: 50, y: 5 };
+            comboCount = 0;
+            
+            dino.style.left = dinoPosition.x + '%';
+            dino.style.bottom = dinoPosition.y + '%';
+            dino.innerHTML = dinoVariations[Math.floor(Math.random() * dinoVariations.length)];
+            
+            victory.style.display = 'none';
+            gameRunning = true;
+            
+            updateHUD();
+            gameLoop();
+        }
+        
+        // Control de teclado para desktop
+        document.addEventListener('keydown', function(event) {
+            switch(event.key) {
+                case 'ArrowUp':
+                    event.preventDefault();
+                    moveDino('up');
+                    break;
+                case 'ArrowDown':
+                    event.preventDefault();
+                    moveDino('down');
+                    break;
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    moveDino('left');
+                    break;
+                case 'ArrowRight':
+                    event.preventDefault();
+                    moveDino('right');
+                    break;
+            }
+        });
+        
+        // Prevenir scroll en móviles
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Inicializar juego
+        updateHUD();
+        gameLoop();
+        startSpawning();
+        
+        // Easter egg: tap en el dino
+        dino.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            if (gameRunning) {
+                this.innerHTML = dinoVariations[Math.floor(Math.random() * dinoVariations.length)];
+                score += 5;
+                updateHUD();
+                setTimeout(() => {
+                    this.innerHTML = '🦕';
+                }, 1500);
+            }
+        });
+    </script>
+</body>
+</html>

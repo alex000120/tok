@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivino Tu Número</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    },
+                    animation: {
+                        'thinking': 'thinking 1.5s infinite',
+                        'pulse-slow': 'pulse 3s infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                    },
+                    keyframes: {
+                        thinking: {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.2)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center transition-colors duration-300">
+    <div class="container max-w-md mx-auto p-6 rounded-lg shadow-lg bg-white dark:bg-gray-800 transition-all">
+        <div id="intro-screen" class="text-center">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Adivino Tu Número</h1>
+            <p class="text-gray-600 dark:text-gray-300 mb-8">Piensa en un número del 1 al 20 y dímelo. ¡Puedo leer tu mente!</p>
+            
+            <div class="mb-6">
+                <label for="user-number" class="block text-gray-700 dark:text-gray-300 mb-2">Ingresa tu número:</label>
+                <input type="number" id="user-number" min="1" max="20" 
+                       class="w-full px-4 py-3 text-base rounded-md border border-gray-300 dark:border-gray-700 
+                              focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white" 
+                       placeholder="1-20">
+                <div class="text-red-500 dark:text-red-400 text-sm mt-1 hidden" id="error-message">
+                    Por favor ingresa un número entre 1 y 20
+                </div>
+            </div>
+            
+            <button id="analyze-btn" 
+                    class="w-full bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-4 rounded-md 
+                           transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:ring-primary">
+                ¡Analizar mi número!
+            </button>
+        </div>
+        
+        <div id="thinking-screen" class="text-center hidden">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Analizando tu número...</h2>
+            
+            <div class="flex items-center justify-center space-x-3 mb-8">
+                <div class="flex space-x-2">
+                    <div class="w-4 h-4 rounded-full bg-primary animate-thinking" style="animation-delay: 0s"></div>
+                    <div class="w-4 h-4 rounded-full bg-primary animate-thinking" style="animation-delay: 0.2s"></div>
+                    <div class="w-4 h-4 rounded-full bg-primary animate-thinking" style="animation-delay: 0.4s"></div>
+                    <div class="w-4 h-4 rounded-full bg-primary animate-thinking" style="animation-delay: 0.6s"></div>
+                    <div class="w-4 h-4 rounded-full bg-primary animate-thinking" style="animation-delay: 0.8s"></div>
+                </div>
+            </div>
+            
+            <div class="flex flex-col space-y-3 text-left mb-6">
+                <div id="thinking-step-1" class="flex items-center opacity-0 transition-opacity duration-500">
+                    <div class="w-5 h-5 rounded-full border-2 border-primary mr-3 flex-shrink-0"></div>
+                    <span class="text-gray-600 dark:text-gray-300" id="thinking-text-1"></span>
+                </div>
+                <div id="thinking-step-2" class="flex items-center opacity-0 transition-opacity duration-500">
+                    <div class="w-5 h-5 rounded-full border-2 border-primary mr-3 flex-shrink-0"></div>
+                    <span class="text-gray-600 dark:text-gray-300" id="thinking-text-2"></span>
+                </div>
+                <div id="thinking-step-3" class="flex items-center opacity-0 transition-opacity duration-500">
+                    <div class="w-5 h-5 rounded-full border-2 border-primary mr-3 flex-shrink-0"></div>
+                    <span class="text-gray-600 dark:text-gray-300" id="thinking-text-3"></span>
+                </div>
+                <div id="thinking-step-4" class="flex items-center opacity-0 transition-opacity duration-500">
+                    <div class="w-5 h-5 rounded-full border-2 border-primary mr-3 flex-shrink-0"></div>
+                    <span class="text-gray-600 dark:text-gray-300" id="thinking-text-4"></span>
+                </div>
+                <div id="thinking-step-5" class="flex items-center opacity-0 transition-opacity duration-500">
+                    <div class="w-5 h-5 rounded-full border-2 border-primary mr-3 flex-shrink-0"></div>
+                    <span class="text-gray-600 dark:text-gray-300" id="thinking-text-5"></span>
+                </div>
+            </div>
+            
+            <div id="brain-container" class="relative h-24 mb-4 hidden">
+                <svg class="w-24 h-24 mx-auto opacity-70 animate-pulse-slow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#5D5CDE" stroke-width="2"/>
+                    <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" stroke="#5D5CDE" stroke-width="2"/>
+                    <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z" fill="#5D5CDE"/>
+                </svg>
+                <div id="brain-waves" class="absolute top-0 left-0 w-full h-full flex justify-center items-center">
+                    <!-- Brain waves will be added dynamically -->
+                </div>
+            </div>
+            
+            <div id="progress-container" class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            
+            <p id="status-text" class="text-gray-600 dark:text-gray-300 text-sm italic"></p>
+        </div>
+        
+        <div id="result-screen" class="text-center hidden">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">¡Increíble! ¡Lo he adivinado!</h2>
+            
+            <div class="mb-8 flex flex-col items-center">
+                <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center mb-6 animate-bounce-slow">
+                    <span class="text-4xl font-bold text-white" id="result-number">?</span>
+                </div>
+                <p class="text-xl text-gray-700 dark:text-gray-200" id="result-message">
+                    ¡Increíble! El número que pensaste es...
+                </p>
+            </div>
+            
+            <button id="retry-btn" 
+                    class="w-full bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-4 rounded-md 
+                           transition-all transform hover:scale-105 focus:outline-none">
+                ¡Intentar con otro número!
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // Game logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const introScreen = document.getElementById('intro-screen');
+            const thinkingScreen = document.getElementById('thinking-screen');
+            const resultScreen = document.getElementById('result-screen');
+            const userNumberInput = document.getElementById('user-number');
+            const errorMessage = document.getElementById('error-message');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const retryBtn = document.getElementById('retry-btn');
+            const resultNumber = document.getElementById('result-number');
+            const resultMessage = document.getElementById('result-message');
+            const progressBar = document.getElementById('progress-bar');
+            const statusText = document.getElementById('status-text');
+            const brainContainer = document.getElementById('brain-container');
+            const brainWaves = document.getElementById('brain-waves');
+            
+            const thinkingSteps = [
+                document.getElementById('thinking-step-1'),
+                document.getElementById('thinking-step-2'),
+                document.getElementById('thinking-step-3'),
+                document.getElementById('thinking-step-4'),
+                document.getElementById('thinking-step-5')
+            ];
+            
+            const thinkingTexts = [
+                document.getElementById('thinking-text-1'),
+                document.getElementById('thinking-text-2'),
+                document.getElementById('thinking-text-3'),
+                document.getElementById('thinking-text-4'),
+                document.getElementById('thinking-text-5')
+            ];
+            
+            // Funny messages for the result
+            const funnyMessages = [
+                "¡Wow! El número que estabas pensando es el {number}. ¿Soy mágico o qué?",
+                "Mmm... Detecto que estabas pensando en el número {number}. ¡Acerté!",
+                "¡Ajá! El {number} es tu número. No puedes esconder tus pensamientos de mí.",
+                "¡Mi poder psíquico me dice que pensaste en el {number}!",
+                "¡Eureka! El número que ocupa tu mente es el {number}.",
+                "Según mis cálculos avanzados, el número que elegiste es {number}.",
+                "¡No puedo creerlo! ¡También pensé en el {number}! ¡Somos telepáticos!",
+                "Mi algoritmo super secreto me dice que tu número es {number}.",
+                "¡Abracadabra! El número {number} ha sido revelado.",
+                "¡El {number}! ¡Lo sabía desde el principio!",
+                "¡Increíble! Mi bola de cristal me muestra el número {number}.",
+                "¡Por todos los magos! ¡Has pensado en el número {number}!",
+                "Las estrellas me han guiado hacia el número {number}. ¡Es el tuyo!",
+                "¡Por el poder de la telepatía! ¡Tu número es {number}!",
+                "¡Un momento de concentración y... {number}! ¡Lo tengo!"
+            ];
+            
+            // Thinking steps to show during analysis
+            const thinkingStepTexts = [
+                "Escaneando ondas cerebrales...",
+                "Procesando patrones numéricos...",
+                "Consultando mi bola de cristal...",
+                "Activando sensores telepáticos...",
+                "Conectando con tu subconsciente...",
+                "Analizando tus microexpresiones faciales...",
+                "Consultando con los espíritus numéricos...",
+                "Calculando probabilidades cuánticas...",
+                "Descifrando el código en tu mente...",
+                "Sincronizando frecuencias mentales...",
+                "Buscando en la base de datos psíquica...",
+                "Detectando fluctuaciones numéricas...",
+                "Realizando análisis de algoritmos avanzados...",
+                "Alineando chakras numéricos...",
+                "¡Casi lo tengo! Un momento más..."
+            ];
+            
+            // Status messages during analysis
+            const statusMessages = [
+                "Concentrándome intensamente...",
+                "Procesando miles de variables...",
+                "Detectando patrones numéricos...",
+                "Conectando neuronas artificiales...",
+                "Ampliando poderes telepáticos...",
+                "Sincronizando con tu mente...",
+                "Calculando posibilidades...",
+                "Preparando resultado final..."
+            ];
+            
+            // Create brain wave effect
+            function createBrainWaves() {
+                brainWaves.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    const wave = document.createElement('div');
+                    wave.className = 'absolute rounded-full border-2 border-primary opacity-0';
+                    wave.style.width = '30px';
+                    wave.style.height = '30px';
+                    wave.style.animation = `brainWave${i+1} 3s infinite`;
+                    
+                    const keyframes = `
+                        @keyframes brainWave${i+1} {
+                            0% { transform: scale(1); opacity: 0.7; }
+                            100% { transform: scale(${3 + i}); opacity: 0; }
+                        }
+                    `;
+                    
+                    const style = document.createElement('style');
+                    style.innerHTML = keyframes;
+                    document.head.appendChild(style);
+                    
+                    wave.style.animationDelay = `${i * 0.8}s`;
+                    brainWaves.appendChild(wave);
+                }
+            }
+            
+            // Start analyzing
+            analyzeBtn.addEventListener('click', function() {
+                // Validate input
+                const userNumber = parseInt(userNumberInput.value);
+                
+                if (isNaN(userNumber) || userNumber < 1 || userNumber > 20) {
+                    errorMessage.classList.remove('hidden');
+                    return;
+                }
+                
+                errorMessage.classList.add('hidden');
+                introScreen.classList.add('hidden');
+                thinkingScreen.classList.remove('hidden');
+                
+                // Reset thinking screen
+                progressBar.style.width = '0%';
+                thinkingSteps.forEach(step => step.classList.add('opacity-0'));
+                
+                // Choose random thinking steps
+                const shuffledSteps = [...thinkingStepTexts].sort(() => 0.5 - Math.random());
+                for (let i = 0; i < thinkingTexts.length; i++) {
+                    thinkingTexts[i].textContent = shuffledSteps[i];
+                }
+                
+                // Animate thinking process
+                let progress = 0;
+                const totalTime = 6000; // 6 seconds total
+                const interval = 50; // Update every 50ms
+                const increment = interval / totalTime * 100;
+                
+                // Show brain visualization halfway through
+                setTimeout(() => {
+                    brainContainer.classList.remove('hidden');
+                    createBrainWaves();
+                }, totalTime / 2);
+                
+                // Sequentially show thinking steps
+                const stepTime = totalTime / (thinkingSteps.length + 1);
+                thinkingSteps.forEach((step, index) => {
+                    setTimeout(() => {
+                        step.classList.remove('opacity-0');
+                        step.classList.add('opacity-100');
+                    }, stepTime * (index + 1));
+                });
+                
+                // Update progress bar and status text
+                const progressInterval = setInterval(() => {
+                    progress += increment;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(progressInterval);
+                        
+                        // Show result after a short delay
+                        setTimeout(() => {
+                            thinkingScreen.classList.add('hidden');
+                            resultScreen.classList.remove('hidden');
+                            
+                            // Display the user's number
+                            resultNumber.textContent = userNumber;
+                            
+                            // Pick a random funny message
+                            const randomMessageIndex = Math.floor(Math.random() * funnyMessages.length);
+                            const message = funnyMessages[randomMessageIndex].replace('{number}', userNumber);
+                            resultMessage.textContent = message;
+                        }, 500);
+                    }
+                    
+                    // Update progress bar
+                    progressBar.style.width = `${progress}%`;
+                    
+                    // Occasionally update status text
+                    if (Math.random() < 0.1) {
+                        const randomStatus = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+                        statusText.textContent = randomStatus;
+                    }
+                }, interval);
+            });
+            
+            // Try again
+            retryBtn.addEventListener('click', function() {
+                resultScreen.classList.add('hidden');
+                userNumberInput.value = '';
+                introScreen.classList.remove('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

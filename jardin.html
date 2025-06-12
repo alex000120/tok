@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garden Harmony - Ecosistema Puzzle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        nature: {
+                            green: '#22C55E',
+                            bloom: '#F59E0B',
+                            sky: '#3B82F6'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'chain-glow': 'chainGlow 1s ease-in-out'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(93, 92, 222, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(93, 92, 222, 0.8); }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes chainGlow {
+            0% { background-color: rgba(34, 197, 94, 0.2); }
+            50% { background-color: rgba(34, 197, 94, 0.6); }
+            100% { background-color: rgba(34, 197, 94, 0.2); }
+        }
+        .dark {
+            --tw-bg-opacity: 1;
+            background-color: rgb(24 24 24 / var(--tw-bg-opacity));
+        }
+        .game-piece {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        .game-piece:hover {
+            transform: scale(1.05);
+        }
+        .game-piece.selected {
+            animation: pulse-glow 1s infinite;
+            transform: scale(1.1);
+        }
+        .game-piece.connected {
+            animation: chain-glow 0.5s ease-in-out;
+        }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #F59E0B;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-100 to-blue-100 dark:from-gray-800 dark:to-gray-900 min-h-screen font-sans">
+    <!-- Header -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg p-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">🌸 Garden Harmony</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-300">Nivel <span id="current-level">1</span></p>
+            </div>
+            <div class="text-right">
+                <div class="text-lg font-bold text-primary" id="score">0 pts</div>
+                <div class="text-sm text-gray-600 dark:text-gray-300" id="objective">Crea 3 cadenas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="max-w-4xl mx-auto p-4">
+        <!-- Game Board -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-4">
+            <div class="grid grid-cols-6 gap-3 mb-6" id="game-board">
+                <!-- Game pieces will be generated here -->
+            </div>
+            
+            <!-- Game Controls -->
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button id="hint-btn" class="bg-nature-bloom text-white px-4 py-2 rounded-lg font-medium text-base hover:bg-yellow-600 transition-colors">
+                    💡 Pista
+                </button>
+                <button id="shuffle-btn" class="bg-nature-sky text-white px-4 py-2 rounded-lg font-medium text-base hover:bg-blue-600 transition-colors">
+                    🔄 Mezclar
+                </button>
+                <button id="reset-btn" class="bg-gray-500 text-white px-4 py-2 rounded-lg font-medium text-base hover:bg-gray-600 transition-colors">
+                    🔄 Reiniciar
+                </button>
+            </div>
+        </div>
+
+        <!-- Chain Display -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-4">
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-3">🔗 Cadena Actual</h3>
+            <div id="current-chain" class="flex flex-wrap gap-2 min-h-[60px] items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3">
+                <span class="text-gray-500 dark:text-gray-400 text-center w-full">Selecciona elementos para crear una cadena</span>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button id="complete-chain" class="bg-nature-green text-white px-4 py-2 rounded-lg font-medium text-base flex-1 hover:bg-green-600 transition-colors disabled:bg-gray-400" disabled>
+                    ✅ Completar Cadena
+                </button>
+                <button id="clear-chain" class="bg-red-500 text-white px-4 py-2 rounded-lg font-medium text-base hover:bg-red-600 transition-colors">
+                    ❌ Limpiar
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-3">📊 Progreso del Nivel</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-300">Cadenas Completadas</span>
+                    <span id="chains-completed" class="font-bold">0/3</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                    <div id="progress-bar" class="bg-nature-green h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 m-4 max-w-sm w-full text-center animate-bounce-in">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">¡Nivel Completado!</h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">Has creado un ecosistema perfecto</p>
+            <div class="text-lg font-bold text-primary mb-6" id="level-score">+500 puntos</div>
+            <button id="next-level" class="bg-primary text-white px-6 py-3 rounded-lg font-medium text-base w-full hover:bg-purple-600 transition-colors">
+                Siguiente Nivel
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Game data
+        const GAME_PIECES = {
+            flowers: [
+                { id: 'sunflower', emoji: '🌻', name: 'Girasol', type: 'flower' },
+                { id: 'rose', emoji: '🌹', name: 'Rosa', type: 'flower' },
+                { id: 'tulip', emoji: '🌷', name: 'Tulipán', type: 'flower' },
+                { id: 'daisy', emoji: '🌼', name: 'Margarita', type: 'flower' },
+                { id: 'cherry', emoji: '🌸', name: 'Cerezo', type: 'flower' },
+                { id: 'hibiscus', emoji: '🌺', name: 'Hibisco', type: 'flower' }
+            ],
+            insects: [
+                { id: 'bee', emoji: '🐝', name: 'Abeja', type: 'insect', eats: ['sunflower', 'rose', 'daisy'] },
+                { id: 'butterfly', emoji: '🦋', name: 'Mariposa', type: 'insect', eats: ['tulip', 'cherry', 'hibiscus'] },
+                { id: 'ant', emoji: '🐜', name: 'Hormiga', type: 'insect', eats: ['sunflower', 'daisy'] },
+                { id: 'spider', emoji: '🕷️', name: 'Araña', type: 'insect', eats: ['rose', 'hibiscus'] },
+                { id: 'ladybug', emoji: '🐞', name: 'Mariquita', type: 'insect', eats: ['tulip', 'cherry'] }
+            ],
+            animals: [
+                { id: 'bird', emoji: '🐦', name: 'Pájaro', type: 'animal', eats: ['bee', 'butterfly', 'ant'] },
+                { id: 'frog', emoji: '🐸', name: 'Rana', type: 'animal', eats: ['ant', 'spider', 'ladybug'] },
+                { id: 'rabbit', emoji: '🐰', name: 'Conejo', type: 'animal', eats: ['sunflower', 'daisy', 'tulip'] },
+                { id: 'mouse', emoji: '🐭', name: 'Ratón', type: 'animal', eats: ['bee', 'ladybug'] }
+            ]
+        };
+
+        // Game state
+        let gameState = {
+            level: 1,
+            score: 0,
+            currentChain: [],
+            chainsCompleted: 0,
+            targetChains: 3,
+            board: [],
+            selectedPiece: null
+        };
+
+        // Initialize game
+        function initGame() {
+            generateBoard();
+            updateDisplay();
+            setupEventListeners();
+        }
+
+        // Generate random board
+        function generateBoard() {
+            gameState.board = [];
+            const allPieces = [...GAME_PIECES.flowers, ...GAME_PIECES.insects, ...GAME_PIECES.animals];
+            
+            // Ensure we have a good mix
+            const flowers = GAME_PIECES.flowers.slice(0, 8);
+            const insects = GAME_PIECES.insects.slice(0, 6);
+            const animals = GAME_PIECES.animals.slice(0, 4);
+            
+            gameState.board = [...flowers, ...insects, ...animals];
+            shuffleArray(gameState.board);
+            
+            // Pad to 36 pieces if needed
+            while (gameState.board.length < 36) {
+                const randomPiece = allPieces[Math.floor(Math.random() * allPieces.length)];
+                gameState.board.push({...randomPiece, id: randomPiece.id + '_' + Math.random()});
+            }
+            
+            renderBoard();
+        }
+
+        // Shuffle array utility
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Render game board
+        function renderBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            
+            gameState.board.forEach((piece, index) => {
+                const pieceElement = document.createElement('div');
+                pieceElement.className = 'game-piece bg-white dark:bg-gray-700 rounded-xl p-4 text-center shadow-lg border-2 border-transparent';
+                pieceElement.innerHTML = `
+                    <div class="text-3xl mb-2">${piece.emoji}</div>
+                    <div class="text-xs font-medium text-gray-600 dark:text-gray-300">${piece.name}</div>
+                `;
+                pieceElement.dataset.index = index;
+                pieceElement.addEventListener('click', () => selectPiece(index));
+                board.appendChild(pieceElement);
+            });
+        }
+
+        // Select piece
+        function selectPiece(index) {
+            const piece = gameState.board[index];
+            const pieceElement = document.querySelector(`[data-index="${index}"]`);
+            
+            // Check if piece can be added to chain
+            if (canAddToChain(piece)) {
+                gameState.currentChain.push({...piece, boardIndex: index});
+                pieceElement.classList.add('connected');
+                
+                // Remove from board visually
+                setTimeout(() => {
+                    pieceElement.style.opacity = '0.3';
+                    pieceElement.style.pointerEvents = 'none';
+                }, 300);
+                
+                updateChainDisplay();
+                updateCompleteButton();
+                createParticles(pieceElement);
+            } else {
+                // Show feedback for invalid selection
+                pieceElement.style.animation = 'none';
+                pieceElement.offsetHeight; // Trigger reflow
+                pieceElement.style.animation = 'pulse 0.5s ease-in-out';
+            }
+        }
+
+        // Check if piece can be added to current chain
+        function canAddToChain(piece) {
+            if (gameState.currentChain.length === 0) {
+                return piece.type === 'flower';
+            }
+            
+            const lastPiece = gameState.currentChain[gameState.currentChain.length - 1];
+            
+            if (lastPiece.type === 'flower' && piece.type === 'insect') {
+                return piece.eats && piece.eats.includes(lastPiece.id.split('_')[0]);
+            }
+            
+            if (lastPiece.type === 'insect' && piece.type === 'animal') {
+                return piece.eats && piece.eats.includes(lastPiece.id.split('_')[0]);
+            }
+            
+            if (lastPiece.type === 'flower' && piece.type === 'animal') {
+                return piece.eats && piece.eats.includes(lastPiece.id.split('_')[0]);
+            }
+            
+            return false;
+        }
+
+        // Update chain display
+        function updateChainDisplay() {
+            const chainContainer = document.getElementById('current-chain');
+            
+            if (gameState.currentChain.length === 0) {
+                chainContainer.innerHTML = '<span class="text-gray-500 dark:text-gray-400 text-center w-full">Selecciona elementos para crear una cadena</span>';
+                return;
+            }
+            
+            chainContainer.innerHTML = gameState.currentChain.map((piece, index) => `
+                <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 text-center min-w-[80px]">
+                    <div class="text-2xl mb-1">${piece.emoji}</div>
+                    <div class="text-xs font-medium text-gray-600 dark:text-gray-300">${piece.name}</div>
+                </div>
+                ${index < gameState.currentChain.length - 1 ? '<div class="text-2xl text-nature-green">→</div>' : ''}
+            `).join('');
+        }
+
+        // Update complete button state
+        function updateCompleteButton() {
+            const completeBtn = document.getElementById('complete-chain');
+            completeBtn.disabled = gameState.currentChain.length < 2;
+        }
+
+        // Complete chain
+        function completeChain() {
+            if (gameState.currentChain.length < 2) return;
+            
+            const chainScore = calculateChainScore();
+            gameState.score += chainScore;
+            gameState.chainsCompleted++;
+            
+            // Remove pieces from board permanently
+            gameState.currentChain.forEach(piece => {
+                gameState.board[piece.boardIndex] = null;
+            });
+            
+            clearChain();
+            updateDisplay();
+            
+            // Check if level is complete
+            if (gameState.chainsCompleted >= gameState.targetChains) {
+                setTimeout(() => showLevelComplete(), 1000);
+            }
+        }
+
+        // Calculate chain score
+        function calculateChainScore() {
+            const baseScore = 100;
+            const lengthBonus = gameState.currentChain.length * 50;
+            const typeBonus = new Set(gameState.currentChain.map(p => p.type)).size * 25;
+            return baseScore + lengthBonus + typeBonus;
+        }
+
+        // Clear current chain
+        function clearChain() {
+            // Restore pieces on board
+            gameState.currentChain.forEach(piece => {
+                const pieceElement = document.querySelector(`[data-index="${piece.boardIndex}"]`);
+                if (pieceElement) {
+                    pieceElement.style.opacity = '1';
+                    pieceElement.style.pointerEvents = 'auto';
+                    pieceElement.classList.remove('connected');
+                }
+            });
+            
+            gameState.currentChain = [];
+            updateChainDisplay();
+            updateCompleteButton();
+        }
+
+        // Create particle effects
+        function createParticles(element) {
+            const rect = element.getBoundingClientRect();
+            for (let i = 0; i < 5; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = rect.left + rect.width/2 + 'px';
+                particle.style.top = rect.top + rect.height/2 + 'px';
+                particle.style.animationDelay = i * 0.1 + 's';
+                document.body.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 2000);
+            }
+        }
+
+        // Show level complete modal
+        function showLevelComplete() {
+            const modal = document.getElementById('success-modal');
+            const levelScore = document.getElementById('level-score');
+            const bonus = gameState.level * 100;
+            
+            gameState.score += bonus;
+            levelScore.textContent = `+${bonus} puntos de bonus`;
+            modal.classList.remove('hidden');
+        }
+
+        // Next level
+        function nextLevel() {
+            gameState.level++;
+            gameState.chainsCompleted = 0;
+            gameState.targetChains = Math.min(3 + Math.floor(gameState.level / 2), 6);
+            gameState.currentChain = [];
+            
+            document.getElementById('success-modal').classList.add('hidden');
+            generateBoard();
+            updateDisplay();
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('current-level').textContent = gameState.level;
+            document.getElementById('score').textContent = gameState.score + ' pts';
+            document.getElementById('objective').textContent = `Crea ${gameState.targetChains} cadenas`;
+            document.getElementById('chains-completed').textContent = `${gameState.chainsCompleted}/${gameState.targetChains}`;
+            
+            const progress = (gameState.chainsCompleted / gameState.targetChains) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+        }
+
+        // Show hint
+        function showHint() {
+            const flowers = gameState.board.filter((p, i) => p && p.type === 'flower');
+            if (flowers.length > 0) {
+                const hintElement = document.querySelector(`[data-index="${gameState.board.indexOf(flowers[0])}"]`);
+                hintElement.style.animation = 'pulse-glow 2s ease-in-out 3';
+            }
+        }
+
+        // Shuffle board
+        function shuffleBoard() {
+            const nonNullPieces = gameState.board.filter(p => p !== null);
+            shuffleArray(nonNullPieces);
+            
+            let pieceIndex = 0;
+            gameState.board = gameState.board.map(p => {
+                if (p === null) return null;
+                return nonNullPieces[pieceIndex++] || null;
+            });
+            
+            renderBoard();
+        }
+
+        // Reset level
+        function resetLevel() {
+            gameState.chainsCompleted = 0;
+            gameState.currentChain = [];
+            generateBoard();
+            updateDisplay();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('complete-chain').addEventListener('click', completeChain);
+            document.getElementById('clear-chain').addEventListener('click', clearChain);
+            document.getElementById('hint-btn').addEventListener('click', showHint);
+            document.getElementById('shuffle-btn').addEventListener('click', shuffleBoard);
+            document.getElementById('reset-btn').addEventListener('click', resetLevel);
+            document.getElementById('next-level').addEventListener('click', nextLevel);
+        }
+
+        // Start game
+        initGame();
+    </script>
+</body>
+</html>
